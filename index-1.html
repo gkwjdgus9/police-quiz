@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0f1e">
+<title>경찰공무원 시험 대비</title>
+<style>
+:root {
+  --bg: #0a0f1e;
+  --bg2: #111827;
+  --card: #1a2235;
+  --card2: #1f2d44;
+  --border: #2a3a52;
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f0f4ff;
+  --text2: #94a3b8;
+  --text3: #64748b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; min-height: 100vh; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ── HOME ── */
+#home { padding: 0 0 40px; }
+.home-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 24px 16px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.home-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.5px; }
+.stats-row { display: flex; justify-content: center; gap: 24px; }
+.stat-item { text-align: center; }
+.stat-val { font-size: 22px; font-weight: 800; color: var(--accent2); }
+.stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.xp-bar-wrap { margin: 12px auto 0; max-width: 280px; }
+.xp-label { font-size: 11px; color: var(--text2); text-align: center; margin-bottom: 5px; }
+.xp-bar { background: var(--border); border-radius: 99px; height: 7px; overflow: hidden; }
+.xp-fill { background: linear-gradient(90deg, var(--accent), var(--accent2)); height: 100%; border-radius: 99px; transition: width 0.5s; }
+
+.section-block { padding: 16px 14px 0; }
+.section-title {
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 6px 2px; border-bottom: 1px solid var(--border);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.subject-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.subject-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 10px;
+  cursor: pointer; transition: all 0.2s;
+  text-align: left; display: flex; flex-direction: column; gap: 4px;
+}
+.subject-btn:active { transform: scale(0.97); background: var(--card2); }
+.subject-btn .subj-name { font-size: 14px; font-weight: 700; }
+.subject-btn .subj-desc { font-size: 11px; color: var(--text2); }
+.subject-btn .subj-acc {
+  font-size: 11px; margin-top: 4px; font-weight: 600;
+  color: var(--accent2);
+}
+.full-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 14px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 9px;
+}
+.full-btn:active { transform: scale(0.98); background: var(--card2); }
+.full-btn .fb-left .fb-name { font-size: 14px; font-weight: 700; }
+.full-btn .fb-left .fb-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.full-btn .fb-right { font-size: 11px; color: var(--accent2); font-weight: 600; }
+
+/* ── QUIZ ── */
+#quiz { padding: 0; }
+.quiz-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+}
+.back-btn {
+  background: none; border: none; color: var(--text2);
+  font-size: 20px; cursor: pointer; padding: 4px 8px 4px 0;
+  line-height: 1;
+}
+.quiz-title { font-size: 14px; font-weight: 700; flex: 1; }
+.hearts { font-size: 16px; letter-spacing: 1px; }
+.timer-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800;
+  background: conic-gradient(var(--accent) var(--pct, 100%), var(--border) 0);
+  transition: background 0.3s;
+}
+
+.progress-bar { height: 4px; background: var(--border); }
+.progress-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+
+.question-wrap { padding: 18px 14px; }
+.q-meta { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.q-num { font-size: 13px; color: var(--accent2); font-weight: 700; margin-bottom: 8px; }
+.q-text { font-size: 15px; line-height: 1.65; font-weight: 500; margin-bottom: 20px; }
+
+.choices { display: flex; flex-direction: column; gap: 9px; }
+.choice-btn {
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 13px 14px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; gap: 10px; align-items: flex-start;
+  text-align: left; font-size: 14px; line-height: 1.5;
+}
+.choice-btn:active { transform: scale(0.99); }
+.choice-btn .num { font-weight: 700; color: var(--accent2); min-width: 18px; }
+.choice-btn.correct { background: #14532d; border-color: var(--green); }
+.choice-btn.wrong { background: #450a0a; border-color: var(--red); }
+.choice-btn.disabled { cursor: default; pointer-events: none; }
+
+.explain-box {
+  margin-top: 14px; background: #1e3a2a; border: 1px solid #16a34a;
+  border-radius: 12px; padding: 14px;
+  font-size: 13px; line-height: 1.65; color: #86efac;
+}
+.explain-box .ex-head { font-size: 12px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+
+.next-btn {
+  display: block; width: calc(100% - 28px); margin: 14px auto 30px;
+  background: var(--accent); color: white;
+  border: none; border-radius: 12px; padding: 15px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+}
+.next-btn:active { transform: scale(0.98); background: #2563eb; }
+
+/* ── RESULT ── */
+#result { padding: 0; }
+.result-wrap {
+  padding: 40px 20px 30px; text-align: center;
+}
+.result-emoji { font-size: 64px; margin-bottom: 16px; }
+.result-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.result-score { font-size: 48px; font-weight: 900; color: var(--accent2); margin-bottom: 6px; }
+.result-sub { font-size: 14px; color: var(--text2); margin-bottom: 30px; }
+.result-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;
+}
+.res-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+}
+.res-card .rc-val { font-size: 24px; font-weight: 800; }
+.res-card .rc-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.result-btns { display: flex; flex-direction: column; gap: 9px; }
+.btn-primary {
+  background: var(--accent); color: white; border: none;
+  border-radius: 12px; padding: 15px; font-size: 15px;
+  font-weight: 700; cursor: pointer; width: 100%;
+}
+.btn-secondary {
+  background: var(--card); color: var(--text); border: 1px solid var(--border);
+  border-radius: 12px; padding: 15px; font-size: 15px;
+  font-weight: 600; cursor: pointer; width: 100%;
+}
+
+/* ── OX QUIZ ── */
+#oxquiz { padding: 0; }
+.ox-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+}
+.ox-timer-bar { height: 4px; background: var(--border); }
+.ox-timer-fill {
+  height: 100%; background: var(--yellow); transition: width 1s linear;
+}
+.ox-wrap { padding: 24px 14px; }
+.ox-progress { text-align: center; font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+.ox-streak { text-align: center; font-size: 12px; color: var(--yellow); font-weight: 700; margin-bottom: 16px; }
+.ox-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 20px;
+  font-size: 15px; line-height: 1.7; min-height: 120px;
+  display: flex; align-items: center;
+}
+.ox-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ox-btn {
+  border: none; border-radius: 16px; padding: 22px;
+  font-size: 36px; cursor: pointer; transition: all 0.15s;
+  font-weight: 900;
+}
+.ox-btn.o-btn { background: #0f3d2b; color: var(--green); border: 2px solid var(--green); }
+.ox-btn.x-btn { background: #3d0f0f; color: var(--red); border: 2px solid var(--red); }
+.ox-btn:active { transform: scale(0.93); }
+.ox-result-bar {
+  display: none; margin-top: 14px; padding: 14px;
+  border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+}
+.ox-result-bar.correct { background: #14532d; color: #86efac; border: 1px solid var(--green); }
+.ox-result-bar.wrong { background: #450a0a; color: #fca5a5; border: 1px solid var(--red); }
+
+/* ── GAMEOVER ── */
+.gameover-wrap {
+  padding: 60px 20px 30px; text-align: center;
+}
+.gameover-emoji { font-size: 72px; margin-bottom: 16px; }
+.gameover-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--red); }
+.gameover-sub { font-size: 14px; color: var(--text2); margin-bottom: 30px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: #1e293b; border: 1px solid var(--border);
+  color: var(--text); padding: 10px 20px; border-radius: 99px;
+  font-size: 13px; font-weight: 600; opacity: 0;
+  transition: all 0.3s; pointer-events: none; z-index: 999;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.xp { border-color: var(--accent); color: var(--accent2); }
+
+/* ── STATS TAB ── */
+.stats-section { padding: 16px 14px 40px; }
+.stats-section h2 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+.stat-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.stat-row .sr-name { flex: 1; font-size: 14px; }
+.stat-row .sr-bar-wrap { flex: 2; }
+.stat-row .sr-bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.stat-row .sr-fill { height: 100%; border-radius: 99px; background: var(--accent); }
+.stat-row .sr-pct { font-size: 12px; color: var(--accent2); font-weight: 700; min-width: 36px; text-align: right; }
+
+/* responsive */
+@media(min-width:480px) {
+  .subject-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HOME ══════════════ -->
+<div id="home" class="screen active">
+  <div class="home-header">
+    <h1>🚔 경찰공무원 시험 대비</h1>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-val" id="stat-streak">0</div>
+        <div class="stat-lbl">🔥 연속학습</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-xp">0</div>
+        <div class="stat-lbl">⭐ 누적 XP</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-plays">0</div>
+        <div class="stat-lbl">🎮 총 플레이</div>
+      </div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-label" id="xp-label">Lv.1 · 수습 &nbsp; 0 / 100 XP</div>
+      <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">🚔 순경 공채</div>
+    <div class="subject-grid">
+      <button class="subject-btn" onclick="startQuiz('형사법','순경')">
+        <span class="subj-name">형사법</span>
+        <span class="subj-desc">형법+형소법</span>
+        <span class="subj-acc" id="acc-형사법-순경">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('헌법','순경')">
+        <span class="subj-name">헌법</span>
+        <span class="subj-desc">기본권·통치</span>
+        <span class="subj-acc" id="acc-헌법-순경">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('경찰학','순경')">
+        <span class="subj-name">경찰학</span>
+        <span class="subj-desc">행정법·이론</span>
+        <span class="subj-acc" id="acc-경찰학-순경">-</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section-block" style="margin-top:12px">
+    <div class="section-title">🎖️ 경찰간부 (경위 공채)</div>
+    <div class="subject-grid">
+      <button class="subject-btn" onclick="startQuiz('형사법','간부')">
+        <span class="subj-name">형사법</span>
+        <span class="subj-desc">고난도 판례</span>
+        <span class="subj-acc" id="acc-형사법-간부">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('헌법','간부')">
+        <span class="subj-name">헌법</span>
+        <span class="subj-desc">헌재 결정</span>
+        <span class="subj-acc" id="acc-헌법-간부">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('경찰학','간부')">
+        <span class="subj-name">경찰학</span>
+        <span class="subj-desc">행정법·이론</span>
+        <span class="subj-acc" id="acc-경찰학-간부">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('범죄학','간부')">
+        <span class="subj-name">범죄학</span>
+        <span class="subj-desc">이론·정책</span>
+        <span class="subj-acc" id="acc-범죄학-간부">-</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section-block" style="margin-top:12px">
+    <div class="section-title">📚 간부 선택과목</div>
+    <div class="subject-grid">
+      <button class="subject-btn" onclick="startQuiz('행정법','간부')">
+        <span class="subj-name">행정법</span>
+        <span class="subj-desc">★★ 인기</span>
+        <span class="subj-acc" id="acc-행정법-간부">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('민법총칙','간부')">
+        <span class="subj-name">민법총칙</span>
+        <span class="subj-desc">★ 최다선택</span>
+        <span class="subj-acc" id="acc-민법총칙-간부">-</span>
+      </button>
+      <button class="subject-btn" onclick="startQuiz('행정학','간부')">
+        <span class="subj-name">행정학</span>
+        <span class="subj-desc">이론·제도</span>
+        <span class="subj-acc" id="acc-행정학-간부">-</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section-block" style="margin-top:12px">
+    <div class="section-title">⭕❌ OX 퀴즈 — 15초 제한</div>
+    <div class="subject-grid">
+      <button class="subject-btn" onclick="startOX('형사법')">
+        <span class="subj-name">형사법</span>
+        <span class="subj-desc">OX 핵심</span>
+      </button>
+      <button class="subject-btn" onclick="startOX('헌법')">
+        <span class="subj-name">헌법</span>
+        <span class="subj-desc">OX 핵심</span>
+      </button>
+      <button class="subject-btn" onclick="startOX('경찰학')">
+        <span class="subj-name">경찰학</span>
+        <span class="subj-desc">OX 핵심</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section-block" style="margin-top:12px">
+    <div class="section-title">📊 과목별 정답률</div>
+    <div id="stats-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════ QUIZ ══════════════ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="quiz-title" id="quiz-title">형사법</div>
+    <div class="hearts" id="hearts-display">❤️❤️❤️</div>
+    <div class="timer-circle" id="timer-circle" style="--pct:100%">30</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:0%"></div></div>
+
+  <div class="question-wrap">
+    <div class="q-meta" id="q-meta"></div>
+    <div class="q-num" id="q-num"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="choices" id="choices"></div>
+    <div class="explain-box" id="explain-box" style="display:none">
+      <div class="ex-head">💡 해설</div>
+      <div id="explain-text"></div>
+    </div>
+  </div>
+  <button class="next-btn" id="next-btn" style="display:none" onclick="nextQuestion()">다음 문제 →</button>
+</div>
+
+<!-- ══════════════ RESULT ══════════════ -->
+<div id="result" class="screen">
+  <div class="result-wrap">
+    <div class="result-emoji" id="res-emoji">🎉</div>
+    <div class="result-title" id="res-title">수고하셨습니다!</div>
+    <div class="result-score" id="res-score">0점</div>
+    <div class="result-sub" id="res-sub"></div>
+    <div class="result-cards">
+      <div class="res-card">
+        <div class="rc-val" id="rc-correct" style="color:var(--green)">0</div>
+        <div class="rc-lbl">✅ 정답</div>
+      </div>
+      <div class="res-card">
+        <div class="rc-val" id="rc-wrong" style="color:var(--red)">0</div>
+        <div class="rc-lbl">❌ 오답</div>
+      </div>
+      <div class="res-card">
+        <div class="rc-val" id="rc-xp" style="color:var(--accent2)">+0</div>
+        <div class="rc-lbl">⭐ 획득 XP</div>
+      </div>
+      <div class="res-card">
+        <div class="rc-val" id="rc-time" style="color:var(--yellow)">0초</div>
+        <div class="rc-lbl">⏱ 평균시간</div>
+      </div>
+    </div>
+    <div class="result-btns">
+      <button class="btn-primary" onclick="retryQuiz()">🔄 다시 풀기</button>
+      <button class="btn-secondary" onclick="goHome()">🏠 홈으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ OX QUIZ ══════════════ -->
+<div id="oxquiz" class="screen">
+  <div class="ox-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="quiz-title" id="ox-title">형사법 OX</div>
+    <div style="font-size:13px;color:var(--yellow);font-weight:700" id="ox-score-disp">0점</div>
+  </div>
+  <div class="ox-timer-bar"><div class="ox-timer-fill" id="ox-timer-fill" style="width:100%"></div></div>
+  <div class="ox-wrap">
+    <div class="ox-progress" id="ox-progress">1 / 20</div>
+    <div class="ox-streak" id="ox-streak-disp"></div>
+    <div class="ox-card" id="ox-card">문제를 불러오는 중...</div>
+    <div class="ox-result-bar" id="ox-result-bar"></div>
+    <div class="ox-btns" style="margin-top:16px">
+      <button class="ox-btn o-btn" onclick="answerOX(true)">⭕</button>
+      <button class="ox-btn x-btn" onclick="answerOX(false)">❌</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAMEOVER -->
+<div id="gameover" class="screen">
+  <div class="gameover-wrap">
+    <div class="gameover-emoji">😵</div>
+    <div class="gameover-title">하트가 소진됐어요!</div>
+    <div class="gameover-sub" id="go-sub">다시 도전해봐요! 💪</div>
+    <div class="result-btns" style="margin-top:20px">
+      <button class="btn-primary" onclick="retryQuiz()">🔄 새로운 문제 세트</button>
+      <button class="btn-secondary" onclick="goHome()">🏠 과목 선택으로</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ QUESTIONS DB ══════════════ -->
+<script>
+/* ─────────────────────────────────────────
+   문제 데이터베이스
+   각 문제: { q, choices:[{t,correct}], explain, category }
+   ───────────────────────────────────────── */
+const Q = {
+
+  /* ══ 형사법 순경 ══ */
+  '형사법_순경': [
+    {
+      q: "피의자신문조서의 증거능력에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "2022년 형사소송법 개정으로 검사 작성 피의자신문조서도 피고인이 공판정에서 그 내용을 인정하여야 증거능력이 인정된다.", correct: false },
+        { t: "피고인과 공범관계에 있는 다른 피의자에 대한 사법경찰관 작성 피의자신문조서에 대하여는 형사소송법 제314조가 적용되지 않는다.", correct: false },
+        // ✅ 수정: '행위자가 인정하면 법인이 부인해도 OK' → 오류. 법인(피고인)이 인정해야 증거능력 발생 (형소법 312조③, 대법원 2016도9367)
+        { t: "법인이 양벌규정에 따라 기소된 경우, 사법경찰관이 행위자에 대해 작성한 피의자신문조서는 법인(피고인)이 그 내용을 인정할 때에 한하여 증거능력이 있다.", correct: false },
+        // ✅ 수정: '사용할 수 없다' → 틀린 선지 (정답). 실제로는 임의성 인정되면 탄핵증거 사용 가능 (형소법 318조의2)
+        { t: "사법경찰관 작성 피의자신문조서는 피고인이 내용을 부인하면 피고인의 법정 진술을 탄핵하기 위한 탄핵증거로 사용할 수 없다.", correct: true }
+      ],
+      explain: "① 옳음: 2022년 개정 형소법 제312조 제1항 – 검사 작성 피신조서도 피고인이 내용을 인정해야 증거능력 인정.\n② 옳음: 공범 피신조서에는 형소법 제312조 제3항이 적용되며, 제314조는 적용되지 않는다(대법원 2016도9367).\n③ 옳음(수정됨): 양벌규정으로 기소된 법인 사건에서 행위자는 법인의 공범에 해당 → 법인(피고인)이 내용을 인정해야 증거능력 발생. 행위자가 인정해도 법인이 부인하면 증거능력 없음.\n④ 틀림(정답): 사법경찰관 작성 피신조서는 피고인이 부인하면 증거능력은 없지만, 임의성의 의심이 없는 한 탄핵증거로는 사용할 수 있다(형소법 제318조의2). '사용할 수 없다'는 설명은 옳지 않음.",
+      category: "형사소송법·증거"
+    },
+    {
+      q: "형법상 정당방위에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "자기 또는 타인의 법익에 대한 현재의 부당한 침해를 방위하기 위한 행위이어야 한다.", correct: false },
+        { t: "방위행위는 상당한 이유가 있어야 한다.", correct: false },
+        { t: "정당방위는 위법성조각사유이므로 책임이 없는 자의 침해에 대해서도 성립할 수 있다.", correct: false },
+        { t: "도발된 침해에 대해서는 정당방위가 절대로 성립할 수 없다.", correct: true }
+      ],
+      explain: "도발(자초침해)의 경우에도 완전히 배제되지는 않으며, 도발의 정도·경위 등에 따라 정당방위 성립 여부를 개별적으로 판단한다. 대법원은 '상당한 이유'를 엄격히 해석할 뿐 절대적으로 성립 불가라고 보지 않는다.",
+      category: "형법·위법성"
+    },
+    {
+      q: "형사소송법상 체포에 관한 설명으로 옳은 것은?",
+      choices: [
+        { t: "긴급체포를 한 경우 반드시 48시간 이내에 구속영장을 청구하여야 한다.", correct: false },
+        { t: "현행범인은 누구든지 영장 없이 체포할 수 있으며, 체포 후 즉시 검사 또는 사법경찰관리에게 인도해야 한다.", correct: true },
+        { t: "일반인이 현행범을 체포한 후 48시간 이내에 인도하면 된다.", correct: false },
+        { t: "긴급체포는 사법경찰관만 할 수 있고 검사는 할 수 없다.", correct: false }
+      ],
+      explain: "형소법 제212조: 현행범인은 누구든지 영장 없이 체포할 수 있다. 제213조: 사법경찰관리 외의 자가 현행범인을 체포한 때에는 즉시 사법경찰관리에게 인도해야 한다. 긴급체포(제200조의3)는 검사와 사법경찰관 모두 가능하며, 48시간이 아닌 '즉시' 구속영장 청구 또는 석방 의무.",
+      category: "형사소송법·수사"
+    },
+  ],
+
+  /* ══ 헌법 순경 ══ */
+  '헌법_순경': [
+    {
+      q: "기본권의 제한에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "국가안전보장·질서유지·공공복리를 위하여 필요한 경우 법률로써 기본권을 제한할 수 있다.", correct: false },
+        { t: "기본권 제한은 과잉금지원칙(비례원칙)을 준수하여야 한다.", correct: false },
+        { t: "기본권의 본질적 내용은 어떠한 경우에도 침해할 수 없다.", correct: false },
+        { t: "국회가 제정한 법률이 아닌 명령·규칙에 의한 기본권 제한은 헌법상 허용되지 않는다.", correct: true }
+      ],
+      explain: "헌법 제37조 제2항은 '법률로써' 기본권을 제한하도록 하지만, 법률의 위임을 받은 명령·규칙에 의한 제한은 허용된다(법률 유보의 원칙). 따라서 '일절 허용되지 않는다'는 진술은 옳지 않다.",
+      category: "헌법·기본권"
+    },
+    {
+      q: "평등권에 관한 헌법재판소 판례로 옳은 것은?",
+      choices: [
+        { t: "차별이 합리적 이유 없이 이루어진 경우에만 평등권 위반이 성립한다.", correct: false },
+        { t: "적극적 우대조치(affirmative action)는 평등권을 침해하므로 위헌이다.", correct: false },
+        { t: "헌법이 스스로 차별을 허용하고 있는 사유에 의한 차별에는 엄격한 심사기준이 적용된다.", correct: true },
+        { t: "성별에 의한 차별에는 완화된 심사기준이 적용된다.", correct: false }
+      ],
+      explain: "헌법재판소는 헌법 제11조 제1항 단서에 열거된 사유(성별·종교·사회적 신분 등)와 같이 헌법이 특별히 평등을 요구하는 영역이나 관련 기본권을 제한하는 경우에는 엄격한 심사기준을 적용한다고 본다.",
+      category: "헌법·평등권"
+    },
+  ],
+
+  /* ══ 경찰학 순경 ══ */
+  '경찰학_순경': [
+    {
+      q: "경찰의 기본이념 중 법치주의에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "경찰권 발동은 법률의 근거가 있어야 한다.", correct: false },
+        { t: "경찰비례의 원칙은 법치주의의 한 내용이다.", correct: false },
+        { t: "경찰은 상위법에 위반되는 명령이라도 상관의 명령이면 복종해야 한다.", correct: true },
+        { t: "개인의 자유와 권리는 법률에 근거하지 않은 경찰권 행사로부터 보호된다.", correct: false }
+      ],
+      explain: "경찰관은 위법한 명령에는 복종 의무가 없다. 경찰공무원법 및 국가공무원법상 공무원은 위법한 직무명령에 따를 의무가 없으며, 상위법에 위반되는 명령은 따라서는 안 된다.",
+      category: "경찰학개론"
+    },
+    {
+      q: "경찰관 직무집행법상 불심검문에 관한 설명으로 옳은 것은?",
+      choices: [
+        { t: "경찰관은 수상한 거동이 있는 자를 발견하면 반드시 동행을 요구해야 한다.", correct: false },
+        { t: "임의동행 요구 시 상대방이 거부하면 강제로 연행할 수 있다.", correct: false },
+        { t: "경찰관은 직무질문을 할 때 자신의 신분을 표시하는 증표를 제시해야 한다.", correct: true },
+        { t: "불심검문은 수사기관만 할 수 있으며 행정경찰은 할 수 없다.", correct: false }
+      ],
+      explain: "경찰관 직무집행법 제3조: 직무질문 시 경찰관은 자신의 신분을 표시하는 증표를 제시하며 소속과 성명을 밝혀야 한다. 임의동행 거부 시 강제연행은 위법이다.",
+      category: "경찰행정법"
+    },
+  ],
+
+  /* ══ 형사법 간부 ══ */
+  '형사법_간부': [
+    {
+      q: "사기죄에 관한 판례의 입장으로 옳지 않은 것은?",
+      choices: [
+        { t: "기망행위는 작위뿐만 아니라 부작위에 의해서도 가능하다.", correct: false },
+        { t: "편취의 고의는 재물 교부 시에 있어야 하며, 사후에 생긴 경우는 사기죄가 성립하지 않는다.", correct: false },
+        { t: "소송사기는 법원을 기망하여 판결을 얻어내는 것으로 사기죄가 성립한다.", correct: false },
+        { t: "피해자의 처분행위 없이도 사기죄는 성립할 수 있다.", correct: true }
+      ],
+      explain: "사기죄는 기망→착오→처분행위→재산상 이익 취득의 인과관계가 있어야 한다. '처분행위' 없이는 사기죄가 성립하지 않는 것이 대법원 판례의 확고한 입장이다. 처분행위 없이 재물을 가져가면 절도죄 등이 성립할 수 있다.",
+      category: "형법각론·재산범죄"
+    },
+  ],
+
+  /* ══ 범죄학 간부 ══ */
+  '범죄학_간부': [
+    {
+      q: "머튼(Merton)의 아노미이론에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "문화적 목표와 제도적 수단 사이의 괴리가 범죄를 유발한다고 본다.", correct: false },
+        { t: "혁신(innovation)은 문화적 목표는 수용하지만 제도적 수단을 거부하는 유형이다.", correct: false },
+        { t: "도피주의(retreatism)는 목표와 수단 모두를 거부하는 유형이다.", correct: false },
+        { t: "반역(rebellion)은 기존 목표와 수단을 유지하면서 새로운 것을 추구하는 유형이다.", correct: true }
+      ],
+      explain: "반역(rebellion)은 기존의 문화적 목표와 제도적 수단을 모두 거부하고 새로운 목표와 수단으로 대체하려는 유형이다. '기존 것을 유지하면서 새로운 것 추구'는 반역의 정의가 아니다.",
+      category: "범죄학이론"
+    },
+  ],
+
+  /* ══ 행정법 간부 ══ */
+  '행정법_간부': [
+    {
+      q: "행정행위의 하자에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "무효인 행정행위는 공정력이 없으므로 누구든지 그 무효를 주장할 수 있다.", correct: false },
+        { t: "취소할 수 있는 행정행위는 권한 있는 기관에 의해 취소될 때까지 유효하다.", correct: false },
+        { t: "행정행위의 하자가 중대·명백한 경우 무효이고, 그렇지 않으면 취소사유에 불과하다.", correct: false },
+        { t: "무효인 행정행위는 하자의 치유가 인정되어 유효로 전환될 수 있다.", correct: true }
+      ],
+      explain: "하자의 치유는 취소사유 있는 행정행위에 대해서만 인정된다. 무효인 행정행위는 처음부터 효력이 없으므로 하자의 치유가 인정되지 않는다.",
+      category: "행정법·행정행위"
+    },
+  ],
+
+  /* ══ 민법총칙 간부 ══ */
+  '민법총칙_간부': [
+    {
+      q: "법률행위의 무효와 취소에 관한 설명으로 옳은 것은?",
+      choices: [
+        { t: "취소된 법률행위는 취소한 때부터 장래를 향하여 효력을 잃는다.", correct: false },
+        { t: "무효행위의 추인은 그 무효를 알고 한 경우에도 원칙적으로 새로운 법률행위로 볼 수 없다.", correct: false },
+        { t: "제한능력자도 능력자가 된 후에 취소할 수 있는 법률행위를 추인할 수 있다.", correct: true },
+        { t: "착오로 인한 취소권의 행사기간은 취소권 발생 후 5년이다.", correct: false }
+      ],
+      explain: "민법 제143조: 취소할 수 있는 법률행위는 추인할 수 있으며, 능력자가 된 후의 추인은 완전히 유효하다. ①: 취소의 효력은 소급하여 무효(민법 제141조). ②: 무효행위를 알고 추인하면 새 법률행위로 봄(민법 제139조 단서). ④: 취소권 행사기간은 추인할 수 있는 날로부터 3년, 법률행위 시로부터 10년(민법 제146조).",
+      category: "민법총칙"
+    },
+  ],
+
+  /* ══ 행정학 간부 ══ */
+  '행정학_간부': [
+    {
+      q: "신공공관리론(NPM)에 관한 설명으로 옳지 않은 것은?",
+      choices: [
+        { t: "시장원리와 경쟁메커니즘을 공공부문에 도입하였다.", correct: false },
+        { t: "결과 중심의 성과관리를 강조한다.", correct: false },
+        { t: "정부의 역할을 확대하고 행정서비스의 공급을 직접화하는 것을 목표로 한다.", correct: true },
+        { t: "영국 대처 정부와 미국 레이건 행정부에서 발전하였다.", correct: false }
+      ],
+      explain: "신공공관리론(NPM)은 오히려 정부 역할을 최소화하고, 민영화·민간위탁 등을 통해 공공서비스를 간접화·아웃소싱하는 것을 지향한다. '정부 역할 확대·직접공급'은 NPM과 반대되는 설명이다.",
+      category: "행정학이론"
+    },
+  ],
+
+};
+
+/* ─── OX 문제 DB ─── */
+const OX = {
+  '형사법': [
+    { q: "사법경찰관 작성 피의자신문조서는 피고인이 공판정에서 내용을 부인하면 증거능력이 없다.", answer: true, explain: "형소법 제312조 제3항에 따라 피고인이 내용을 인정해야 증거능력이 발생한다." },
+    { q: "현행범인은 검사, 사법경찰관만 체포할 수 있다.", answer: false, explain: "형소법 제212조: 현행범인은 누구든지 영장 없이 체포할 수 있다." },
+    { q: "정당방위는 위법성조각사유이다.", answer: true, explain: "형법 제21조 정당방위는 위법성이 조각되어 범죄가 성립하지 않는다." },
+    { q: "사기죄는 피해자의 처분행위 없이도 성립한다.", answer: false, explain: "사기죄 성립에는 기망→착오→처분행위→재산이익 취득의 인과관계가 필수다." },
+    { q: "미수범은 모든 범죄에서 처벌된다.", answer: false, explain: "형법 제29조: 미수범은 법률에 특별한 규정이 있는 경우에만 처벌한다." },
+    { q: "공범에 대한 경찰 피의자신문조서는 당해 피고인이 내용을 인정하지 않아도 제314조에 따라 증거능력이 인정될 수 있다.", answer: false, explain: "대법원 2016도9367: 공범 피신조서는 제314조 적용 없이 당해 피고인이 인정해야만 증거능력이 있다." },
+  ],
+  '헌법': [
+    { q: "기본권의 본질적 내용은 어떠한 경우에도 침해할 수 없다.", answer: true, explain: "헌법 제37조 제2항 후단: 자유와 권리의 본질적 내용을 침해할 수 없다." },
+    { q: "법률로써 기본권을 제한하는 경우 과잉금지원칙을 준수해야 한다.", answer: true, explain: "목적정당성·수단적합성·침해최소성·법익균형성의 4단계 심사를 거쳐야 한다." },
+    { q: "헌법재판소의 위헌결정에는 법원의 재판이 포함된다.", answer: false, explain: "헌법재판소법 제68조 제1항: 법원의 재판은 헌법소원의 대상에서 제외된다(원칙)." },
+    { q: "국적법상 이중국적은 예외 없이 금지된다.", answer: false, explain: "국적법은 일정한 경우(복수국적자 등) 이중국적을 허용한다." },
+  ],
+  '경찰학': [
+    { q: "경찰관 직무집행법상 불심검문 시 신분증을 제시해야 한다.", answer: true, explain: "경직법 제3조: 직무질문 시 경찰관은 신분을 표시하는 증표를 제시해야 한다." },
+    { q: "경찰은 상관의 명령이면 위법한 명령이라도 복종해야 한다.", answer: false, explain: "위법한 직무명령에는 복종 의무가 없다. 오히려 거부해야 한다." },
+    { q: "경찰비례의 원칙은 필요성·적합성·상당성의 세 요소로 구성된다.", answer: true, explain: "과잉금지원칙(비례원칙)은 목적정당성·수단적합성·필요최소성·법익균형성으로도 설명된다." },
+  ],
+};
+
+/* ─────────────────────────────────────────
+   STATE
+   ───────────────────────────────────────── */
+let state = {
+  subject: '',
+  type: '',
+  pool: [],
+  idx: 0,
+  correct: 0,
+  wrong: 0,
+  hearts: 3,
+  answered: false,
+  timeLeft: 30,
+  timerId: null,
+  totalTime: 0,
+  oxPool: [],
+  oxIdx: 0,
+  oxScore: 0,
+  oxStreak: 0,
+  oxTimerId: null,
+  oxTimeLeft: 15,
+};
+
+let save = JSON.parse(localStorage.getItem('police_save') || '{}');
+/* save = { xp, streak, lastDate, plays, accs:{key:{c,t}} } */
+if (!save.xp) save.xp = 0;
+if (!save.streak) save.streak = 0;
+if (!save.plays) save.plays = 0;
+if (!save.accs) save.accs = {};
+
+function persist() { localStorage.setItem('police_save', JSON.stringify(save)); }
+
+/* ─────────────────────────────────────────
+   SCREEN HELPERS
+   ───────────────────────────────────────── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  clearInterval(state.timerId);
+  clearInterval(state.oxTimerId);
+  show('home');
+  renderHome();
+}
+
+/* ─────────────────────────────────────────
+   HOME RENDER
+   ───────────────────────────────────────── */
+function levelInfo(xp) {
+  const levels = [
+    [0,'수습',100],[100,'순찰관',300],[300,'형사보',600],[600,'형사',1000],
+    [1000,'경장',1500],[1500,'경사',2200],[2200,'경위',3000],[3000,'경감',4500],[4500,'경정',6500],[6500,'총경',99999]
+  ];
+  let lv = 1, cur = 0, next = 100, title = '수습';
+  for (let i = 0; i < levels.length; i++) {
+    if (xp >= levels[i][0]) { lv = i+1; title = levels[i][1]; cur = levels[i][0]; next = levels[i][2]; }
+  }
+  return { lv, title, cur, next, pct: Math.min(100, ((xp - cur) / (next - cur)) * 100) };
+}
+
+function renderHome() {
+  const li = levelInfo(save.xp);
+  document.getElementById('stat-streak').textContent = save.streak;
+  document.getElementById('stat-xp').textContent = save.xp;
+  document.getElementById('stat-plays').textContent = save.plays;
+  document.getElementById('xp-label').textContent = `Lv.${li.lv} · ${li.title}  ${save.xp - li.cur} / ${li.next - li.cur} XP`;
+  document.getElementById('xp-fill').style.width = li.pct + '%';
+
+  // accuracy buttons
+  Object.keys(Q).forEach(key => {
+    const [subj, type] = key.split('_');
+    const acc = save.accs[key];
+    const el = document.getElementById(`acc-${subj}-${type}`);
+    if (el) el.textContent = acc && acc.t > 0 ? `정답률 ${Math.round(acc.c/acc.t*100)}%` : '미응시';
+  });
+
+  // stats list
+  const sl = document.getElementById('stats-list');
+  sl.innerHTML = '';
+  Object.keys(Q).forEach(key => {
+    const [subj, type] = key.split('_');
+    const acc = save.accs[key];
+    if (!acc || acc.t === 0) return;
+    const pct = Math.round(acc.c/acc.t*100);
+    sl.innerHTML += `
+      <div class="stat-row">
+        <div class="sr-name">${subj} (${type})</div>
+        <div class="sr-bar-wrap"><div class="sr-bar"><div class="sr-fill" style="width:${pct}%"></div></div></div>
+        <div class="sr-pct">${pct}%</div>
+      </div>`;
+  });
+  if (!sl.innerHTML) sl.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:10px 0">아직 풀이 기록이 없습니다.</div>';
+}
+
+/* ─────────────────────────────────────────
+   QUIZ
+   ───────────────────────────────────────── */
+function startQuiz(subj, type) {
+  const key = `${subj}_${type}`;
+  const qs = Q[key];
+  if (!qs || qs.length === 0) { showToast('준비 중인 문제입니다 🛠️'); return; }
+  clearInterval(state.timerId);
+
+  state.subject = subj; state.type = type;
+  state.pool = shuffle([...qs]);
+  state.idx = 0; state.correct = 0; state.wrong = 0;
+  state.hearts = 3; state.answered = false; state.totalTime = 0;
+
+  document.getElementById('quiz-title').textContent = `${subj} (${type})`;
+  show('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = state.pool[state.idx];
+  if (!q) { endQuiz(); return; }
+
+  state.answered = false;
+  document.getElementById('explain-box').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('q-meta').textContent = q.category || '';
+  document.getElementById('q-num').textContent = `Q${state.idx + 1} / ${state.pool.length}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-progress').style.width = (state.idx / state.pool.length * 100) + '%';
+
+  // hearts
+  document.getElementById('hearts-display').textContent = '❤️'.repeat(state.hearts) + '🖤'.repeat(3 - state.hearts);
+
+  // choices
+  const c = document.getElementById('choices');
+  c.innerHTML = '';
+  const nums = ['①','②','③','④'];
+  shuffle([...q.choices]).forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="num">${nums[i]}</span><span>${ch.t}</span>`;
+    btn.dataset.correct = ch.correct;
+    btn.onclick = () => chooseAnswer(btn, ch.correct, q);
+    c.appendChild(btn);
+  });
+
+  // timer
+  clearInterval(state.timerId);
+  state.timeLeft = 30;
+  updateTimer();
+  state.timerId = setInterval(() => {
+    state.timeLeft--;
+    state.totalTime++;
+    updateTimer();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerId);
+      if (!state.answered) timeUp(q);
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  const t = document.getElementById('timer-circle');
+  const pct = (state.timeLeft / 30) * 100;
+  t.textContent = state.timeLeft;
+  const color = state.timeLeft > 10 ? 'var(--accent)' : 'var(--red)';
+  t.style.background = `conic-gradient(${color} ${pct}%, var(--border) 0)`;
+}
+
+function timeUp(q) {
+  if (state.answered) return;
+  state.answered = true;
+  state.wrong++;
+  state.hearts--;
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+  showExplain(q);
+  document.getElementById('hearts-display').textContent = '❤️'.repeat(state.hearts) + '🖤'.repeat(3 - state.hearts);
+  if (state.hearts <= 0) { setTimeout(() => showGameover(), 1200); return; }
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function chooseAnswer(btn, isCorrect, q) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerId);
+  state.totalTime += (30 - state.timeLeft);
+
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+
+  if (isCorrect) {
+    state.correct++;
+    const xpGain = 10 + Math.max(0, state.timeLeft - 5) * 1;
+    save.xp += xpGain; save.plays++;
+    persist();
+    showToast(`+${xpGain} XP ⭐`, true);
+  } else {
+    btn.classList.add('wrong');
+    state.wrong++;
+    state.hearts--;
+    document.getElementById('hearts-display').textContent = '❤️'.repeat(state.hearts) + '🖤'.repeat(3 - state.hearts);
+    if (state.hearts <= 0) { showExplain(q); setTimeout(() => showGameover(), 1500); return; }
+  }
+  showExplain(q);
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function showExplain(q) {
+  const box = document.getElementById('explain-box');
+  document.getElementById('explain-text').textContent = q.explain || '';
+  box.style.display = 'block';
+}
+
+function showGameover() {
+  clearInterval(state.timerId);
+  const key = `${state.subject}_${state.type}`;
+  if (!save.accs[key]) save.accs[key] = {c:0, t:0};
+  save.accs[key].c += state.correct;
+  save.accs[key].t += state.correct + state.wrong;
+  persist();
+  document.getElementById('go-sub').textContent = `${state.correct}문제 맞혔어요. 다시 도전해봐요! 💪`;
+  show('gameover');
+}
+
+function nextQuestion() {
+  state.idx++;
+  if (state.idx >= state.pool.length) { endQuiz(); return; }
+  renderQuestion();
+}
+
+function endQuiz() {
+  clearInterval(state.timerId);
+  const total = state.correct + state.wrong;
+  const score = total > 0 ? Math.round(state.correct / total * 100) : 0;
+  const xpGain = state.correct * 10;
+  save.xp += xpGain; save.plays++;
+  const key = `${state.subject}_${state.type}`;
+  if (!save.accs[key]) save.accs[key] = {c:0, t:0};
+  save.accs[key].c += state.correct;
+  save.accs[key].t += total;
+  persist();
+
+  document.getElementById('res-emoji').textContent = score >= 80 ? '🎉' : score >= 60 ? '👍' : '📚';
+  document.getElementById('res-title').textContent = score >= 80 ? '훌륭합니다!' : score >= 60 ? '잘 하셨어요!' : '더 연습해봐요!';
+  document.getElementById('res-score').textContent = score + '점';
+  document.getElementById('res-sub').textContent = `${state.subject} (${state.type}) · ${total}문제 완료`;
+  document.getElementById('rc-correct').textContent = state.correct;
+  document.getElementById('rc-wrong').textContent = state.wrong;
+  document.getElementById('rc-xp').textContent = '+' + xpGain;
+  document.getElementById('rc-time').textContent = total > 0 ? Math.round(state.totalTime / total) + '초' : '-';
+  show('result');
+}
+
+function retryQuiz() { startQuiz(state.subject, state.type); }
+
+/* ─────────────────────────────────────────
+   OX QUIZ
+   ───────────────────────────────────────── */
+function startOX(subj) {
+  const qs = OX[subj];
+  if (!qs || qs.length === 0) { showToast('준비 중인 OX문제입니다 🛠️'); return; }
+  clearInterval(state.oxTimerId);
+
+  state.subject = subj;
+  state.oxPool = shuffle([...qs]);
+  state.oxIdx = 0; state.oxScore = 0; state.oxStreak = 0;
+
+  document.getElementById('ox-title').textContent = `${subj} OX`;
+  show('oxquiz');
+  renderOX();
+}
+
+function renderOX() {
+  const q = state.oxPool[state.oxIdx];
+  if (!q) { endOX(); return; }
+
+  document.getElementById('ox-card').textContent = q.q;
+  document.getElementById('ox-progress').textContent = `${state.oxIdx + 1} / ${state.oxPool.length}`;
+  document.getElementById('ox-streak-disp').textContent = state.oxStreak >= 3 ? `🔥 ${state.oxStreak}연속!` : '';
+  document.getElementById('ox-score-disp').textContent = state.oxScore + '점';
+  document.getElementById('ox-result-bar').style.display = 'none';
+
+  document.querySelectorAll('.ox-btn').forEach(b => b.disabled = false);
+
+  clearInterval(state.oxTimerId);
+  state.oxTimeLeft = 15;
+  document.getElementById('ox-timer-fill').style.width = '100%';
+  document.getElementById('ox-timer-fill').style.transition = 'width 1s linear';
+
+  state.oxTimerId = setInterval(() => {
+    state.oxTimeLeft--;
+    const pct = (state.oxTimeLeft / 15) * 100;
+    document.getElementById('ox-timer-fill').style.width = pct + '%';
+    if (state.oxTimeLeft <= 0) {
+      clearInterval(state.oxTimerId);
+      answerOX(null); // time up = wrong
+    }
+  }, 1000);
+}
+
+function answerOX(userAns) {
+  clearInterval(state.oxTimerId);
+  document.querySelectorAll('.ox-btn').forEach(b => b.disabled = true);
+
+  const q = state.oxPool[state.oxIdx];
+  const correct = userAns === q.answer;
+  const bar = document.getElementById('ox-result-bar');
+  bar.style.display = 'block';
+
+  if (userAns === null) {
+    bar.className = 'ox-result-bar wrong';
+    bar.textContent = '⏱ 시간 초과! 정답: ' + (q.answer ? '⭕' : '❌');
+    state.oxStreak = 0;
+  } else if (correct) {
+    bar.className = 'ox-result-bar correct';
+    bar.textContent = '✅ 정답! ' + (q.explain || '');
+    state.oxScore += 10 + (state.oxStreak >= 3 ? 5 : 0);
+    state.oxStreak++;
+    save.xp += 5; persist();
+  } else {
+    bar.className = 'ox-result-bar wrong';
+    bar.textContent = '❌ 오답! 정답: ' + (q.answer ? '⭕ 맞다' : '❌ 틀리다') + '  ' + (q.explain || '');
+    state.oxStreak = 0;
+  }
+
+  document.getElementById('ox-streak-disp').textContent = state.oxStreak >= 3 ? `🔥 ${state.oxStreak}연속!` : '';
+  document.getElementById('ox-score-disp').textContent = state.oxScore + '점';
+
+  setTimeout(() => {
+    state.oxIdx++;
+    renderOX();
+  }, 2000);
+}
+
+function endOX() {
+  showToast(`OX 완료! 총 ${state.oxScore}점 🎉`);
+  goHome();
+}
+
+/* ─────────────────────────────────────────
+   UTILS
+   ───────────────────────────────────────── */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showToast(msg, isXP = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isXP ? ' xp' : '');
+  setTimeout(() => t.className = 'toast', 2000);
+}
+
+/* ─── INIT ─── */
+renderHome();
+</script>
+</body>
+</html>
