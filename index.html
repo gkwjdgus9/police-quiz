@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0a0f1e">
+<meta name="theme-color" content="#ffffff">
 <title>경찰공무원 시험 대비</title>
 <style>
 :root {
-  --bg: #0a0f1e;
-  --bg2: #111827;
-  --card: #1a2235;
-  --card2: #1f2d44;
-  --border: #2a3a52;
+  --bg: #ffffff;
+  --bg2: #f8fafc;
+  --card: #ffffff;
+  --card2: #f1f5f9;
+  --border: #e2e8f0;
   --accent: #3b82f6;
-  --accent2: #60a5fa;
-  --green: #22c55e;
-  --red: #ef4444;
-  --yellow: #f59e0b;
-  --text: #f0f4ff;
-  --text2: #94a3b8;
-  --text3: #64748b;
+  --accent2: #2563eb;
+  --green: #16a34a;
+  --red: #dc2626;
+  --yellow: #d97706;
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; min-height: 100vh; }
@@ -31,21 +31,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic 
 /* ── HOME ── */
 #home { padding: 0 0 40px; }
 .home-header {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
   padding: 24px 16px 20px;
   text-align: center;
   border-bottom: 1px solid var(--border);
 }
-.home-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.5px; }
+.home-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.5px; color: #ffffff; }
 .stats-row { display: flex; justify-content: center; gap: 24px; }
 .stat-item { text-align: center; }
-.stat-val { font-size: 22px; font-weight: 800; color: var(--accent2); }
-.stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.stat-val { font-size: 22px; font-weight: 800; color: #ffffff; }
+.stat-lbl { font-size: 11px; color: #dbeafe; margin-top: 2px; }
 
 .xp-bar-wrap { margin: 12px auto 0; max-width: 280px; }
-.xp-label { font-size: 11px; color: var(--text2); text-align: center; margin-bottom: 5px; }
-.xp-bar { background: var(--border); border-radius: 99px; height: 7px; overflow: hidden; }
-.xp-fill { background: linear-gradient(90deg, var(--accent), var(--accent2)); height: 100%; border-radius: 99px; transition: width 0.5s; }
+.xp-label { font-size: 11px; color: #dbeafe; text-align: center; margin-bottom: 5px; }
+.xp-bar { background: rgba(255,255,255,0.25); border-radius: 99px; height: 7px; overflow: hidden; }
+.xp-fill { background: linear-gradient(90deg, #93c5fd, #ffffff); height: 100%; border-radius: 99px; transition: width 0.5s; }
 
 .section-block { padding: 16px 14px 0; }
 .section-title {
@@ -120,14 +120,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic 
 }
 .choice-btn:active { transform: scale(0.99); }
 .choice-btn .num { font-weight: 700; color: var(--accent2); min-width: 18px; }
-.choice-btn.correct { background: #14532d; border-color: var(--green); }
-.choice-btn.wrong { background: #450a0a; border-color: var(--red); }
+.choice-btn.correct { background: #dcfce7; border-color: var(--green); }
+.choice-btn.wrong { background: #fee2e2; border-color: var(--red); }
 .choice-btn.disabled { cursor: default; pointer-events: none; }
 
 .explain-box {
-  margin-top: 14px; background: #1e3a2a; border: 1px solid #16a34a;
+  margin-top: 14px; background: #f0fdf4; border: 1px solid #16a34a;
   border-radius: 12px; padding: 14px;
-  font-size: 13px; line-height: 1.65; color: #86efac;
+  font-size: 13px; line-height: 1.65; color: #166534;
 }
 .explain-box .ex-head { font-size: 12px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
 
@@ -196,15 +196,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic 
   font-size: 36px; cursor: pointer; transition: all 0.15s;
   font-weight: 900;
 }
-.ox-btn.o-btn { background: #0f3d2b; color: var(--green); border: 2px solid var(--green); }
-.ox-btn.x-btn { background: #3d0f0f; color: var(--red); border: 2px solid var(--red); }
+.ox-btn.o-btn { background: #f0fdf4; color: var(--green); border: 2px solid var(--green); }
+.ox-btn.x-btn { background: #fef2f2; color: var(--red); border: 2px solid var(--red); }
 .ox-btn:active { transform: scale(0.93); }
 .ox-result-bar {
   display: none; margin-top: 14px; padding: 14px;
   border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
 }
-.ox-result-bar.correct { background: #14532d; color: #86efac; border: 1px solid var(--green); }
-.ox-result-bar.wrong { background: #450a0a; color: #fca5a5; border: 1px solid var(--red); }
+.ox-result-bar.correct { background: #dcfce7; color: #166534; border: 1px solid var(--green); }
+.ox-result-bar.wrong { background: #fee2e2; color: #991b1b; border: 1px solid var(--red); }
 
 /* ── GAMEOVER ── */
 .gameover-wrap {
@@ -217,14 +217,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Apple SD Gothic 
 /* ── TOAST ── */
 .toast {
   position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px);
-  background: #1e293b; border: 1px solid var(--border);
-  color: var(--text); padding: 10px 20px; border-radius: 99px;
+  background: #1e293b; border: 1px solid #334155;
+  color: #f8fafc; padding: 10px 20px; border-radius: 99px;
   font-size: 13px; font-weight: 600; opacity: 0;
   transition: all 0.3s; pointer-events: none; z-index: 999;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.xp { border-color: var(--accent); color: var(--accent2); }
+.toast.xp { border-color: var(--accent); color: #93c5fd; }
 
 /* ── STATS TAB ── */
 .stats-section { padding: 16px 14px 40px; }
