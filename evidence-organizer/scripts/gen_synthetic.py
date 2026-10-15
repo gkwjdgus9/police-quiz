@@ -357,9 +357,14 @@ def build_labels(msgs: list[Msg], transfers: list[Transfer], csv_lines: list[int
             "phones": sorted({norm_digits(p) for p in [PHONE_ASSISTANT, PHONE_OPERATOR, PHONE_CS, PHONE_RESTAURANT]}),
             "urls": sorted([URL_APP, URL_TG, URL_LOGIN, URL_SHORT, URL_NAVER]),
             "wallets": sorted(w.values()),
-            # '500만원' 식 한국어 단위 표기는 해석 규칙이 확정되지 않아 라벨에서 분리해 둔다.
-            "amount_mentions_korean_unit": ["500만원", "700만원", "2천만원", "800만원", "5만원", "6천만원"],
+            # 대화에 등장하는 한국어 단위 금액 표기와 환산값(억=10^8, 만=10^4, 천=10^3)
+            "amount_mentions_korean_unit": {"500만원": 5_000_000, "700만원": 7_000_000, "2천만원": 20_000_000, "800만원": 8_000_000, "5만원": 50_000, "6천만원": 60_000_000},
         },
+        # 피해가 아닌데도 1단계 규칙(계좌+금액이 대화와 일치)으로는 confirmed 되는 이체.
+        # 대화 참여자(정하나)가 자기 계좌와 회비 금액을 올렸기 때문이며, 역할 분류(2단계)로 걸러야 한다.
+        "known_false_positives": [
+            {"to_account": norm_digits(ACC_HANA_MEMBER), "amount": 50_000, "reason": "모임 회비 - 무관한 참여자의 계좌·금액이 대화에 등장"},
+        ],
         "message_count": len(msgs),
     }
 

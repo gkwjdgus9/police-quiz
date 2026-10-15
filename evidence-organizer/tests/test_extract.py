@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from eo.extract import extract_accounts, extract_all, extract_amounts, extract_phones, extract_urls, extract_wallets
+from eo.extract import extract_accounts, extract_all, extract_amounts, extract_phones, extract_urls, extract_wallets, parse_korean_amount
 
 # --- 계좌 ---------------------------------------------------------------------
 @pytest.mark.parametrize(
@@ -129,11 +129,16 @@ def test_wallets_negative(text: str) -> None:
         ("3000000원 보냈어요", [3_000_000], []),
         ("₩4,500,000", [4_500_000], []),
         ("15,000,000 원", [15_000_000], []),
-        ("500만원 추가", [], ["500만원"]),
-        ("2천만원입니다", [], ["2천만원"]),
-        ("1억 2천만 원", [], ["1억 2천만 원"]),
-        ("회비 5만원이에요", [], ["5만원"]),
-        ("3,000,000원 과 500만원", [3_000_000], ["500만원"]),
+        ("500만원 추가", [5_000_000], []),
+        ("2천만원입니다", [20_000_000], []),
+        ("1억 2천만 원", [120_000_000], []),
+        ("회비 5만원이에요", [50_000], []),
+        ("3,000,000원 과 500만원", [3_000_000, 5_000_000], []),
+        ("300만 넣었어요", [3_000_000], []),           # '원' 없어도 '만'이 있으면 환산
+        ("1,500만원", [15_000_000], []),
+        ("3천 넣었어요", [], ["3천"]),                  # 3,000 인지 3천만인지 모호 → 보류
+        ("3천원", [3_000], []),
+        ("1.5억", [150_000_000], []),
         ("수익 23%", [], []),
         ("2026년 8월 20일", [], []),
         ("10명 모집", [], []),
@@ -141,6 +146,14 @@ def test_wallets_negative(text: str) -> None:
 )
 def test_amounts(text: str, explicit: list[int], unresolved: list[str]) -> None:
     assert extract_amounts(text) == (explicit, unresolved)
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [("500만원", 5_000_000), ("2천만원", 20_000_000), ("1억 2천만 원", 120_000_000), ("6천만원", 60_000_000), ("3천", None), ("1.23만원", 12_300), ("1.2345천원", None), ("그냥", None)],
+)
+def test_parse_korean_amount(raw: str, expected: int | None) -> None:
+    assert parse_korean_amount(raw) == expected
 
 
 # --- 통합 ---------------------------------------------------------------------

@@ -21,8 +21,8 @@ def build_timeline(events: Iterable[Event]) -> tuple[list[Event], list[ReviewIte
     for ev in events:
         for raw in enrich_event(ev):
             reviews.append(ReviewItem(
-                category="amount_korean_unit",
-                reason="한국어 단위 금액 표기('만원' 등)의 해석 규칙이 확정되지 않아 금액으로 쓰지 않음",
+                category="amount_ambiguous",
+                reason="금액 표기가 모호해('3천' 처럼 원·만 단위 없음) 환산하지 않음",
                 value=raw,
                 evidence=[ev.evidence],
             ))

@@ -8,9 +8,11 @@
   phones   : 숫자만. 휴대폰(01x), 지역번호(02, 0xx), 인터넷전화(070), 대표번호(15xx/16xx/18xx).
   urls     : 표기 그대로(끝의 문장부호만 제거).
   wallets  : 표기 그대로.
-  amounts  : int. '3,000,000원'/'3000000원'/'₩3,000,000' 처럼 자릿수가 명시된 것만.
-             '500만원'/'2천만원' 같은 한국어 단위 표기는 해석 규칙이 확정되지 않았으므로
-             amounts 에 넣지 않고 unresolved_amounts 로 따로 돌려준다(needs_review 대상).
+  amounts  : int. '3,000,000원'/'3000000원'/'₩3,000,000' 같은 명시 표기와,
+             '500만원'/'2천만원'/'1억 2천만 원' 같은 한국어 단위 표기를 결정적으로 환산한 값.
+             환산 규칙: 억=10^8, 천만=10^7, 백만=10^6, 만=10^4, 천=10^3, 부분은 더한다.
+             단 '3천'처럼 '원'도 '만/억'도 없는 표기는 3,000 인지 3천만인지 알 수 없으므로
+             환산하지 않고 unresolved_amounts 로 돌려준다(needs_review 대상).
 """
 
 from __future__ import annotations
@@ -62,8 +64,10 @@ RE_WALLET_BTC = re.compile(r"(?<![A-Za-z0-9])(bc1[ac-hj-np-z02-9]{25,62}|[13][a-
 # --- 금액 ----------------------------------------------------------------------
 # 자릿수가 명시된 금액: 3,000,000원 / 3000000원 / ₩3,000,000 / 3,000,000 원
 RE_AMOUNT_EXPLICIT = re.compile(r"(?<![\d,.])(?:₩\s*(\d{1,3}(?:,\d{3})+|\d+)|(\d{1,3}(?:,\d{3})+|\d+)\s*원)(?![\d,])")
-# 한국어 단위 표기: 500만원 / 2천만원 / 1억 2천만 원 / 5만원 — 해석하지 않고 원문만 수집
-RE_AMOUNT_KOREAN_UNIT = re.compile(r"(?<![\d,])((?:\d[\d,]*\s*(?:억|천만|백만|만|천)\s*)+원?)")
+# 한국어 단위 표기: 500만원 / 2천만원 / 1억 2천만 원 / 5만원
+RE_AMOUNT_KOREAN_UNIT = re.compile(r"(?<![\d,])((?:\d[\d,]*(?:\.\d+)?\s*(?:억|천만|백만|만|천)\s*)+원?)")
+_RE_UNIT_PART = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(억|천만|백만|만|천)")
+UNIT_VALUE = {"억": 100_000_000, "천만": 10_000_000, "백만": 1_000_000, "만": 10_000, "천": 1_000}
 
 
 @dataclass
@@ -132,14 +136,40 @@ def extract_wallets(text: str) -> list[str]:
     return _dedupe(found)
 
 
+def parse_korean_amount(raw: str) -> int | None:
+    """'1억 2천만 원' → 120000000. 환산할 수 없거나 모호하면 None.
+
+    모호한 경우: 단위가 '천'뿐이고 '원'이 없을 때('3천' = 3,000 인지 3천만인지 불명).
+    """
+    parts = _RE_UNIT_PART.findall(raw)
+    if not parts:
+        return None
+    has_won = raw.rstrip().endswith("원")
+    if not has_won and all(unit == "천" for _, unit in parts):
+        return None
+    total = 0.0
+    for num, unit in parts:
+        total += float(num.replace(",", "")) * UNIT_VALUE[unit]
+    if total != int(total):
+        return None  # 소수 환산 결과가 정수가 아니면(예: 1.23만) 보류
+    return int(total)
+
+
 def extract_amounts(text: str) -> tuple[list[int], list[str]]:
-    """(명시 금액 int 목록, 해석 보류 원문 목록)."""
-    explicit: list[int] = []
+    """(금액 int 목록, 해석 보류 원문 목록)."""
+    amounts: list[int] = []
     for m in RE_AMOUNT_EXPLICIT.finditer(text):
         raw = m.group(1) or m.group(2)
-        explicit.append(int(raw.replace(",", "")))
-    unresolved = [m.group(1).strip() for m in RE_AMOUNT_KOREAN_UNIT.finditer(text)]
-    return _dedupe_ints(explicit), _dedupe(unresolved)
+        amounts.append(int(raw.replace(",", "")))
+    unresolved: list[str] = []
+    for m in RE_AMOUNT_KOREAN_UNIT.finditer(text):
+        raw = m.group(1).strip()
+        value = parse_korean_amount(raw)
+        if value is None:
+            unresolved.append(raw)
+        else:
+            amounts.append(value)
+    return _dedupe_ints(amounts), _dedupe(unresolved)
 
 
 def _dedupe_ints(items: Iterable[int]) -> list[int]:

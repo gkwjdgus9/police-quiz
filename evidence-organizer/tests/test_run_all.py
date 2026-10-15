@@ -30,17 +30,17 @@ def test_end_to_end(tmp_path: Path) -> None:
     for name in ["manifest.json", "run.log", "timeline.jsonl", "extracted.json", "ledger.json", "needs_review.json", "report.md", "evaluate.md", "evaluate.json"]:
         assert (out / name).exists(), name
 
-    # 추출 100%, confirmed 는 정밀도 100% / 재현율 8/12, 보고서 근거 없는 문장 0
+    # 추출 100%, confirmed 재현율 12/12, 오탐은 라벨에 적힌 회비 1건뿐, 보고서 근거 없는 문장 0
     for key in ("accounts", "phones", "urls", "wallets"):
         assert result["extraction"][key]["recall"] == 1.0 and result["extraction"][key]["precision"] == 1.0, key
-    assert result["ledger"]["confirmed"]["precision"] == 1.0
-    assert result["ledger"]["confirmed"]["tp"] == 8 and result["ledger"]["confirmed"]["fn"] == 4
+    assert result["ledger"]["confirmed"]["recall"] == 1.0
+    assert result["ledger"]["confirmed"]["tp"] == 12 and result["ledger"]["confirmed"]["fp"] == 1
     assert result["ledger"]["confirmed_or_review"]["recall"] == 1.0
     assert result["report"]["unsupported_ratio"] == 0.0
 
     reviews = json.loads((out / "needs_review.json").read_text(encoding="utf-8"))
     assert all(r["status"] == "needs_review" for r in reviews)
-    assert {r["category"] for r in reviews} == {"amount_korean_unit", "ledger_row"}
+    assert {r["category"] for r in reviews} == {"ledger_row"}
 
     # 재실행: manifest 검증 통과, runs 2회
     run_all.run(CASE, out)

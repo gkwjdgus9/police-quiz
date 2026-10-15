@@ -33,12 +33,13 @@ def test_timeline_sorted_and_enriched() -> None:
     ev = [
         msg("2026-08-22T10:00", "김실장", "계좌 352-1234-5678-93 로 3,000,000원", 10),
         transfer("2026-08-22T09:00", 100, "", 2),
-        msg("2026-08-22T09:30", "이수진", "500만원 보낼게요", 9),
+        msg("2026-08-22T09:30", "이수진", "500만원 보낼게요, 수수료는 3천 정도?", 9),
     ]
     tl, reviews = build_timeline(ev)
     assert [e.line for e in tl] == [2, 9, 10]
     assert tl[2].extracted["accounts"] == ["3521234567893"] and tl[2].extracted["amounts"] == [3_000_000]
-    assert len(reviews) == 1 and reviews[0].value == "500만원" and reviews[0].status == "needs_review"
+    assert tl[1].extracted["amounts"] == [5_000_000]  # '500만원' 은 환산
+    assert len(reviews) == 1 and reviews[0].value == "3천" and reviews[0].status == "needs_review"  # '3천' 은 모호 → 보류
     assert reviews[0].evidence == [Evidence("chat.txt", 9)]
 
 
@@ -67,9 +68,9 @@ def test_jsonl_roundtrip(tmp_path: Path) -> None:
 def test_ledger_rules() -> None:
     ev = [
         msg("2026-08-22T09:50", "김실장", "증거금 3,000,000원 농협 352-1234-5678-93", 5),
-        msg("2026-08-25T13:50", "김실장", "500만원 추가, 계좌 동일 352-1234-5678-93", 6),
+        msg("2026-08-25T13:50", "김실장", "추가 입금 부탁드립니다, 계좌 동일 352-1234-5678-93", 6),
         transfer("2026-08-22T10:30", 3_000_000, "3521234567893", 2),   # 계좌+금액 → confirmed
-        transfer("2026-08-25T14:10", 5_000_000, "3521234567893", 3),   # 계좌만 → needs_review
+        transfer("2026-08-25T14:10", 5_000_000, "3521234567893", 3),   # 계좌만(금액 언급 없음) → needs_review
         transfer("2026-09-14T17:45", 3_000_000, "45691023456789", 4),  # 금액만 → needs_review
         transfer("2026-08-30T18:20", 650_000, "1002345678901", 5),     # 둘 다 없음
         transfer("2026-08-26T12:33", 45_900, "", 6),                   # 상대 계좌 없음
@@ -103,8 +104,9 @@ def test_synthetic_ledger_against_labels() -> None:
     confirmed = [r for r in rows if r.status == "confirmed"]
     fraud_keys = {(f["to_account"], f["amount"], f["evidence"]["line"]) for f in labels["fraud_transfers"]}
     conf_keys = {(r.to_account, r.amount, next(e.line for e in r.evidence if e.src == "transfers_kb.csv")) for r in confirmed}
-    # 명시 금액이 대화에 있는 피해 이체 8건만 confirmed, 나머지 피해 4건('만원' 표기)은 needs_review
-    assert conf_keys <= fraud_keys
-    assert len(confirmed) == 8
-    assert all(r.status == "needs_review" for r in rows if (r.to_account, r.amount) not in {(k[0], k[1]) for k in conf_keys})
-    assert {r.value for r in reviews} == set(labels["chat"]["amount_mentions_korean_unit"])
+    # 피해 이체 12건 전부 confirmed ('만원' 표기도 환산되므로)
+    assert fraud_keys <= conf_keys
+    # 규칙상 confirmed 되는 무관 이체(회비)는 라벨의 known_false_positives 와 정확히 일치해야 한다
+    extra = {(k[0], k[1]) for k in conf_keys - fraud_keys}
+    assert extra == {(f["to_account"], f["amount"]) for f in labels["known_false_positives"]}
+    assert reviews == []  # case01 의 단위 표기는 전부 환산 가능

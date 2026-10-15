@@ -88,11 +88,9 @@ def test_every_content_line_has_valid_footnote(synthetic_report) -> None:
 def test_synthetic_report_sections(synthetic_report) -> None:
     md, _, labels = synthetic_report
     assert "## 3. 범죄일람표 (confirmed)" in md and "## 4. 확인 필요 이체 (needs_review)" in md
-    assert "피해 이체는 8건" in md
+    assert "피해 이체는 13건" in md  # 피해 12건 + 규칙상 함께 잡히는 회비 1건
     for acc in labels["chat"]["accounts"]:
         assert f"`{acc}`" in md
-    for unit in labels["chat"]["amount_mentions_korean_unit"]:
-        assert f"'{unit}'" in md
     assert "<!-- generated_at=" in md
 
 

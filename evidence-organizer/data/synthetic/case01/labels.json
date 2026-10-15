@@ -173,14 +173,21 @@
       "TEDVX1uu32gDauUySdimshiizSvFsYkw4F",
       "bc1q06aaqjdzng07ue30t6qm8e78v8ekkrz99pttnh"
     ],
-    "amount_mentions_korean_unit": [
-      "500만원",
-      "700만원",
-      "2천만원",
-      "800만원",
-      "5만원",
-      "6천만원"
-    ]
+    "amount_mentions_korean_unit": {
+      "500만원": 5000000,
+      "700만원": 7000000,
+      "2천만원": 20000000,
+      "800만원": 8000000,
+      "5만원": 50000,
+      "6천만원": 60000000
+    }
   },
+  "known_false_positives": [
+    {
+      "to_account": "12345604567890",
+      "amount": 50000,
+      "reason": "모임 회비 - 무관한 참여자의 계좌·금액이 대화에 등장"
+    }
+  ],
   "message_count": 362
 }
