@@ -1,9 +1,13 @@
-"""전체 파이프라인 실행기 (1단계, LLM 없음).
+"""전체 파이프라인 실행기.
 
-  hashing → parsers → extract → timeline → ledger → report → evaluate
+  1단계: hashing → parsers → extract → timeline → ledger
+  2단계: roles(참여자 역할) → narrative(사건 경위)   ※ 로컬 Ollama 가 있을 때만
+  마무리: report → evaluate
 
 사용:
   python scripts/run_all.py --case data/synthetic/case01 [--out out/case01] [--victim 이름]
+                            [--llm auto|ollama|none] [--model qwen2.5:7b] [--ollama-url http://127.0.0.1:11434]
+  --llm auto(기본): 127.0.0.1 의 Ollama 에 모델이 있으면 2단계를 돌리고, 없으면 건너뛰고 로그에 남긴다.
 
 입력: <case>/raw/ 아래의 원본(읽기 전용). *.txt 는 카카오톡 내보내기, *.csv 는 은행 이체내역으로 본다.
       <case>/labels.json 이 있으면 평가까지 한다. <case>/case.json 의 victim 을 기본 피해자 이름으로 쓴다.
@@ -26,9 +30,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from eo.evaluate import evaluate_all, format_table  # noqa: E402
 from eo.hashing import build_or_verify_manifest, git_hash  # noqa: E402
 from eo.ledger import build_ledger  # noqa: E402
+from eo.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, CallLog, LLMClient, LLMError, OllamaClient  # noqa: E402
+from eo.narrative import generate_narrative  # noqa: E402
 from eo.parsers.bank_csv import parse_bank_csv  # noqa: E402
 from eo.parsers.kakao import parse_kakao  # noqa: E402
 from eo.report import build_report, write_report  # noqa: E402
+from eo.roles import classify_roles  # noqa: E402
 from eo.schema import KST, Event, LedgerRow, ReviewItem  # noqa: E402
 from eo.timeline import aggregate_extracted, build_timeline, write_json, write_timeline_jsonl  # noqa: E402
 
@@ -65,7 +72,26 @@ def parse_raw(raw_dir: Path, victim: str, log: logging.Logger) -> list[Event]:
     return events
 
 
-def run(case_dir: Path, out_dir: Path, victim: str | None = None) -> dict:
+def make_llm(mode: str, *, model: str, url: str, out_dir: Path, log: logging.Logger) -> LLMClient | None:
+    """--llm 옵션에 따라 클라이언트를 만든다. auto 는 Ollama 가 응답할 때만."""
+    if mode == "none":
+        log.info("LLM 미사용(--llm none): 2단계 건너뜀")
+        return None
+    try:
+        client = OllamaClient(url=url, model=model, log=CallLog(path=out_dir / "llm_log.jsonl"))
+    except LLMError as e:
+        raise SystemExit(f"LLM 설정 오류: {e}") from e
+    if client.is_available():
+        log.info("로컬 LLM 사용: %s @ %s (model=%s)", client.name, url, model)
+        return client
+    if mode == "ollama":
+        raise SystemExit(f"Ollama 에 연결할 수 없거나 모델 {model} 이 없습니다: {url}")
+    log.info("Ollama 없음(%s, model=%s) → 2단계 건너뜀, 역할은 전부 unknown/needs_review", url, model)
+    return None
+
+
+def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMClient | None = None, llm_mode: str = "none",
+        model: str = DEFAULT_MODEL, ollama_url: str = DEFAULT_OLLAMA_URL) -> dict:
     log = setup_logging(out_dir)
     raw_dir = case_dir / "raw"
     now = datetime.now(KST)
@@ -94,10 +120,25 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None) -> dict:
     n_conf = sum(r.status == "confirmed" for r in ledger)
     log.info("일람표 %d행 (confirmed %d, needs_review %d)", len(ledger), n_conf, len(ledger) - n_conf)
 
-    # 6. 보고서
-    md, dropped = build_report(case_name=case_dir.name, events=timeline, ledger=ledger, reviews=reviews, extracted=extracted, generated_at=now, git_hash=commit)
+    # 6~7. 2단계: 역할 분류, 사건 경위 (로컬 LLM)
+    if llm is None:
+        llm = make_llm(llm_mode, model=model, url=ollama_url, out_dir=out_dir, log=log)
+    roles = classify_roles(timeline, victim=victim, llm=llm)
+    write_json([r.to_dict() for r in roles], out_dir / "roles.json")
+    log.info("역할 판정: %s", {r.actor: r.role for r in roles})
+    narrative, narrative_dropped = generate_narrative(timeline, ledger, roles, victim=victim, llm=llm)
+    write_json({"kept": [s.to_dict() for s in narrative], "dropped": [d.to_dict() for d in narrative_dropped]}, out_dir / "narrative.json")
+    if llm is not None:
+        log.info("사건 경위: 통과 %d문장, 버림 %d문장", len(narrative), len(narrative_dropped))
+
+    # 8. 보고서
+    md, dropped = build_report(case_name=case_dir.name, events=timeline, ledger=ledger, reviews=reviews, extracted=extracted, generated_at=now, git_hash=commit,
+                               roles=roles, narrative=narrative, llm_name=f"{llm.name}/{getattr(llm, 'model', '')}" if llm else "")
     write_report(md, out_dir / "report.md")
-    all_reviews = [*reviews, *dropped]
+    all_reviews = [*reviews, *dropped, *narrative_dropped]
+    for r in roles:
+        if r.status != "confirmed":
+            all_reviews.append(ReviewItem(category="role", reason=f"{r.role} ({r.confidence:.0%}) {r.reason}", value=r.actor, evidence=list(r.evidence)))
     for r in ledger:
         if r.status != "confirmed":
             all_reviews.append(_ledger_review(r))
@@ -109,7 +150,10 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None) -> dict:
     labels_path = case_dir / "labels.json"
     if labels_path.exists():
         labels = json.loads(labels_path.read_text(encoding="utf-8"))
-        result = evaluate_all(labels=labels, extracted=extracted, ledger=[r.to_dict() for r in ledger], report_md=md, raw_dir=raw_dir)
+        result = evaluate_all(labels=labels, extracted=extracted, ledger=[r.to_dict() for r in ledger], report_md=md, raw_dir=raw_dir,
+                              roles=[r.to_dict() for r in roles],
+                              narrative=[s.to_dict() for s in narrative] if llm else None,
+                              narrative_dropped=[d.to_dict() for d in narrative_dropped])
         write_json(result, out_dir / "evaluate.json")
         table = format_table(result)
         (out_dir / "evaluate.md").write_text(f"# 평가 - {case_dir.name}\n\n{table}", encoding="utf-8")
@@ -130,9 +174,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--case", type=Path, default=ROOT / "data" / "synthetic" / "case01", help="사건 디렉터리 (raw/ 포함)")
     ap.add_argument("--out", type=Path, default=None, help="출력 디렉터리 (기본 out/<case name>)")
     ap.add_argument("--victim", default=None, help="피해자 이름 (기본: case.json 의 victim)")
+    ap.add_argument("--llm", choices=["auto", "ollama", "none"], default="auto", help="2단계 로컬 LLM 사용 여부 (기본 auto)")
+    ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama 모델 이름 (기본 {DEFAULT_MODEL})")
+    ap.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Ollama 주소. 루프백만 허용")
     args = ap.parse_args(argv)
     out = args.out or (ROOT / "out" / args.case.name)
-    run(args.case, out, args.victim)
+    run(args.case, out, args.victim, llm_mode=args.llm, model=args.model, ollama_url=args.ollama_url)
     return 0
 
 

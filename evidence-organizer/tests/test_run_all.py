@@ -40,7 +40,12 @@ def test_end_to_end(tmp_path: Path) -> None:
 
     reviews = json.loads((out / "needs_review.json").read_text(encoding="utf-8"))
     assert all(r["status"] == "needs_review" for r in reviews)
-    assert {r["category"] for r in reviews} == {"ledger_row"}
+    assert {r["category"] for r in reviews} == {"ledger_row", "role"}  # LLM 없음 → 역할은 전부 unknown/needs_review
+    roles = json.loads((out / "roles.json").read_text(encoding="utf-8"))
+    assert {r["actor"]: r["role"] for r in roles if r["actor"] == "이수진"} == {"이수진": "victim"}
+    assert result["roles"]["accuracy"] == 0.0 and result["roles"]["unknown"] == 4
+    assert "narrative" not in result
+    assert "사건 경위" not in (out / "report.md").read_text(encoding="utf-8")
 
     # 재실행: manifest 검증 통과, runs 2회
     run_all.run(CASE, out)
@@ -63,3 +68,36 @@ def test_tampered_raw_is_rejected(tmp_path: Path) -> None:
     p.write_text(p.read_text(encoding="utf-8-sig").replace("3,000,000", "3,000,001", 1), encoding="utf-8-sig")
     with pytest.raises(IntegrityError):
         run_all.run(case, out)
+
+
+@pytest.mark.skipif(not CASE.exists(), reason="case01 미생성")
+def test_end_to_end_with_fake_llm(tmp_path: Path) -> None:
+    """2단계: 가짜 LLM 으로 역할·경위가 보고서와 평가에 들어가고, 근거 없는 문장은 걸러지는지."""
+    from eo.llm import FakeLLM
+
+    run_all = _load_run_all()
+    labels = json.loads((CASE / "labels.json").read_text(encoding="utf-8"))
+
+    def roles_answer(system: str, prompt: str):
+        d = json.loads(prompt.split("서류철(JSON):\n", 1)[1])
+        return {"role": labels["participants"][d["actor"]], "confidence": 0.85, "evidence_lines": [d["samples"][0]["line"]], "reason": "표본 근거"}
+
+    def narrative_answer(system: str, prompt: str):
+        lines = [json.loads(l) for l in prompt.split("자료 묶음(인용 가능한 행):\n", 1)[1].splitlines() if l.startswith("{")]
+        csv_rows = [l for l in lines if l["src"].endswith(".csv")][:3]
+        sents = [{"text": f"{l['ts']} 피해자가 {l['text']}", "cites": [{"src": l["src"], "line": l["line"]}]} for l in csv_rows]
+        sents.append({"text": "박대표가 1억원을 요구했다.", "cites": [{"src": csv_rows[0]["src"], "line": csv_rows[0]["line"]}]})  # 지어낸 금액 → 버림
+        return {"sentences": sents}
+
+    out = tmp_path / "out"
+    result = run_all.run(CASE, out, llm=FakeLLM({"roles": roles_answer, "narrative": narrative_answer}, log=None))
+    assert result["roles"]["accuracy"] == 1.0 and result["roles"]["uncited"] == 0
+    assert result["narrative"] == {**result["narrative"], "kept": 3, "dropped": 1, "bad_reference": 0}
+    md = (out / "report.md").read_text(encoding="utf-8")
+    assert "## 6. 사건 경위" in md and "## 7. 검토 필요 항목" in md
+    assert "1억원" not in md
+    assert "운영자(리딩방 주도)" in md and "제안, 검토 필요" in md
+    reviews = json.loads((out / "needs_review.json").read_text(encoding="utf-8"))
+    assert any(r["category"] == "narrative_dropped" for r in reviews)
+    assert (out / "narrative.json").exists() and (out / "roles.json").exists()
+    assert result["report"]["unsupported_ratio"] == 0.0

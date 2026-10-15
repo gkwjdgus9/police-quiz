@@ -108,12 +108,58 @@ def evaluate_report(md: str, raw_dir: Path) -> dict[str, Any]:
     }
 
 
-def evaluate_all(*, labels: dict[str, Any], extracted: dict[str, Any], ledger: list[dict[str, Any]], report_md: str, raw_dir: Path) -> dict[str, Any]:
-    return {
+def evaluate_roles(roles: list[dict[str, Any]], labels: dict[str, Any]) -> dict[str, Any]:
+    """labels.participants 대비 역할 정확도. 피해자는 사건 정보로 주어지므로 제외한다."""
+    gold = labels.get("participants", {})
+    victim = labels.get("victim")
+    judged = {r["actor"]: r for r in roles}
+    total = correct = unknown = 0
+    mismatches: list[str] = []
+    for actor, role in gold.items():
+        if actor == victim:
+            continue
+        total += 1
+        pred = judged.get(actor, {}).get("role", "unknown")
+        if pred == role:
+            correct += 1
+        elif pred == "unknown":
+            unknown += 1
+        else:
+            mismatches.append(f"{actor}: 정답 {role}, 예측 {pred}")
+    return {"total": total, "correct": correct, "unknown": unknown, "wrong": total - correct - unknown,
+            "accuracy": round(correct / total, 4) if total else 0.0, "mismatches": mismatches,
+            "uncited": sum(1 for r in roles if r.get("role") != "unknown" and not r.get("evidence"))}
+
+
+def evaluate_narrative(narrative: list[dict[str, Any]], dropped: list[dict[str, Any]], raw_dir: Path) -> dict[str, Any]:
+    """통과한 문장 수, 버린 문장 수, 통과 문장의 각주가 실제 행을 가리키는지."""
+    sizes: dict[str, int] = {}
+    for p in raw_dir.rglob("*"):
+        if p.is_file():
+            sizes[p.name] = len(p.read_bytes().decode("utf-8-sig", errors="replace").splitlines())
+    bad = 0
+    for s in narrative:
+        evs = s.get("evidence", [])
+        if not evs or any(e["src"] not in sizes or not (1 <= int(e["line"]) <= sizes[e["src"]]) for e in evs):
+            bad += 1
+    kept, drop = len(narrative), len(dropped)
+    return {"kept": kept, "dropped": drop, "bad_reference": bad,
+            "kept_ratio": round(kept / (kept + drop), 4) if kept + drop else 0.0,
+            "drop_reasons": [d.get("reason", "") for d in dropped][:5]}
+
+
+def evaluate_all(*, labels: dict[str, Any], extracted: dict[str, Any], ledger: list[dict[str, Any]], report_md: str, raw_dir: Path,
+                 roles: list[dict[str, Any]] | None = None, narrative: list[dict[str, Any]] | None = None, narrative_dropped: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    result: dict[str, Any] = {
         "extraction": {k: v.to_dict() for k, v in evaluate_extraction(extracted, labels).items()},
         "ledger": {k: v.to_dict() for k, v in evaluate_ledger(ledger, labels).items()},
         "report": evaluate_report(report_md, raw_dir),
     }
+    if roles is not None:
+        result["roles"] = evaluate_roles(roles, labels)
+    if narrative is not None:
+        result["narrative"] = evaluate_narrative(narrative, narrative_dropped or [], raw_dir)
+    return result
 
 
 def format_table(result: dict[str, Any]) -> str:
@@ -130,6 +176,18 @@ def format_table(result: dict[str, Any]) -> str:
     rows.append("| 보고서 | 문장 수 | 각주 없음 | 잘못된 각주 | 근거 없는 비율 |")
     rows.append("|---|---|---|---|---|")
     rows.append(f"| report.md | {r['sentences']} | {r['no_footnote']} | {r['bad_reference']} | {r['unsupported_ratio']:.1%} |")
+    if "roles" in result:
+        ro = result["roles"]
+        rows.append("")
+        rows.append("| 역할 분류 (LLM) | 대상 | 정답 | unknown | 오답 | 정확도 | 근거 없는 판정 |")
+        rows.append("|---|---|---|---|---|---|---|")
+        rows.append(f"| 피해자 제외 참여자 | {ro['total']} | {ro['correct']} | {ro['unknown']} | {ro['wrong']} | {ro['accuracy']:.0%} | {ro['uncited']} |")
+    if "narrative" in result:
+        na = result["narrative"]
+        rows.append("")
+        rows.append("| 사건 경위 (LLM) | 통과 문장 | 버린 문장 | 잘못된 각주 | 통과 비율 |")
+        rows.append("|---|---|---|---|---|")
+        rows.append(f"| narrative | {na['kept']} | {na['dropped']} | {na['bad_reference']} | {na['kept_ratio']:.0%} |")
     return "\n".join(rows) + "\n"
 
 

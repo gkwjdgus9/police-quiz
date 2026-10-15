@@ -13,8 +13,13 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from eo.schema import EXTRACTED_KEYS, Event, Evidence, LedgerRow, ReviewItem
+
+if TYPE_CHECKING:
+    from eo.narrative import NarrativeSentence
+    from eo.roles import RoleJudgement
 
 CATEGORY_LABELS = {"accounts": "계좌번호", "phones": "전화번호", "urls": "URL", "wallets": "가상자산 주소", "amounts": "금액"}
 
@@ -80,11 +85,18 @@ def build_report(
     extracted: dict[str, dict[str, list[dict]]],
     generated_at: datetime,
     git_hash: str,
+    roles: Sequence["RoleJudgement"] = (),
+    narrative: Sequence["NarrativeSentence"] = (),
+    llm_name: str = "",
 ) -> tuple[str, list[ReviewItem]]:
-    """보고서 markdown 과, 근거가 없어 제외된 문장 목록을 돌려준다."""
+    """보고서 markdown 과, 근거가 없어 제외된 문장 목록을 돌려준다.
+
+    roles / narrative 는 2단계(로컬 LLM) 산출물이며 비어 있으면 해당 절을 쓰지 않는다.
+    """
     b = ReportBuilder()
     b.lines.append(f"# 수사보고서 초안 - {case_name}")
-    b.comment(f"generated_at={generated_at.isoformat()} git={git_hash} tool=evidence-organizer stage1 (LLM 미사용)")
+    stage = f"stage2 (로컬 LLM: {llm_name})" if llm_name else "stage1 (LLM 미사용)"
+    b.comment(f"generated_at={generated_at.isoformat()} git={git_hash} tool=evidence-organizer {stage}")
     b.comment("이 문서는 자동 생성된 초안이다. 모든 문장은 [파일명:행번호] 근거를 가지며, 확정은 수사관이 한다.")
 
     messages = [e for e in events if e.kind == "message"]
@@ -108,8 +120,15 @@ def build_report(
         per_actor: dict[str, list[Event]] = {}
         for m in messages:
             per_actor.setdefault(m.actor, []).append(m)
+        role_by_actor = {r.actor: r for r in roles}
         for actor, evs in sorted(per_actor.items(), key=lambda kv: -len(kv[1])):
             b.sentence(f"참여자 '{actor}'은(는) 메시지 {len(evs)}건을 보냈다(첫 메시지 {fmt_ts(evs[0].ts)}, 마지막 {fmt_ts(evs[-1].ts)}).", [evs[0].evidence, evs[-1].evidence])
+            r = role_by_actor.get(actor)
+            if r is not None and r.role != "unknown":
+                from eo.roles import ROLE_LABELS  # 순환 import 방지
+
+                tag = "확정" if r.status == "confirmed" else "제안, 검토 필요"
+                b.sentence(f"'{actor}'의 역할은 {ROLE_LABELS.get(r.role, r.role)}로 판단된다({tag}, 신뢰도 {r.confidence:.0%}): {r.reason}", r.evidence)
     else:
         b.sentence("대화 자료가 없다.", [])  # 근거 없음 → 제외됨
 
@@ -157,8 +176,14 @@ def build_report(
             who = f" (발신: {', '.join(actors)})" if actors else ""
             b.sentence(f"{CATEGORY_LABELS[key]} `{value}`이(가) 대화에 {len(evs)}회 등장한다{who}.", evidence)
 
-    # 6. 검토 필요 항목 -----------------------------------------------------------
-    b.heading("6. 검토 필요 항목 (needs_review)")
+    # 6. 사건 경위 (LLM 서술) --------------------------------------------------------
+    if narrative:
+        b.heading("6. 사건 경위 (로컬 LLM 서술 초안, 전부 검토 필요)")
+        for sent in narrative:
+            b.sentence(sent.text, sent.evidence)
+
+    # 7. 검토 필요 항목 -----------------------------------------------------------
+    b.heading("7. 검토 필요 항목 (needs_review)" if narrative else "6. 검토 필요 항목 (needs_review)")
     wrote = 0
     for item in reviews:
         wrote += b.sentence(f"[{item.category}] '{item.value}': {item.reason}", item.evidence)
