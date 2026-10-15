@@ -1,7 +1,7 @@
-# evidence-organizer (1·2단계)
+# evidence-organizer (1·2·3단계)
 
 사이버사기 피해자 제출 자료(카카오톡 내보내기, 은행 이체내역 CSV)에서 타임라인·추출물·범죄일람표·수사보고서 초안을 만든다.
-설계 원칙과 구조는 [CLAUDE.md](CLAUDE.md) 참고. 1단계는 LLM 없이 결정적 코드만 쓰고, 2단계는 localhost 의 Ollama 로 참여자 역할 분류와 사건 경위 서술을 '제안'한다.
+설계 원칙과 구조는 [CLAUDE.md](CLAUDE.md) 참고. 1단계는 LLM 없이 결정적 코드만 쓰고, 2단계는 localhost 의 Ollama 로 참여자 역할 분류와 사건 경위 서술을 '제안'하며, 3단계는 캡처 이미지 OCR(로컬 tesseract)과 사건 간 계좌·번호·URL·지갑 교차 조회를 한다.
 
 ## 실행
 
@@ -24,6 +24,15 @@ python scripts/run_all.py --case data/synthetic/case01 --llm ollama --model qwen
 
 루프백이 아닌 주소는 `--ollama-url` 로 줘도 거부한다. 프롬프트와 응답은 전부 `out/<case>/llm_log.jsonl` 에 남는다.
 
+3단계 캡처 OCR 은 `--ocr auto`(기본)에서 로컬 tesseract(kor+eng)가 있을 때만 돌고, 없으면 캡처는 해시만 기록하고 needs_review 로 남긴다. 사건 간 교차 조회는 사건마다 run_all 을 돌린 뒤 한 번 더 실행한다.
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-kor      # (선택) 캡처 OCR
+python scripts/run_all.py --case data/synthetic/case01
+python scripts/run_all.py --case data/synthetic/case02
+python scripts/cross_cases.py                          # out/crosscase/shared.md
+```
+
 ## 산출물 (out/<case>/)
 
 | 파일 | 내용 |
@@ -37,6 +46,8 @@ python scripts/run_all.py --case data/synthetic/case01 --llm ollama --model qwen
 | roles.json | 참여자 역할 판정(2단계). 피해자만 confirmed, 나머지는 LLM 제안 + 근거 행, needs_review |
 | narrative.json | 사건 경위 문장(2단계). 통과 문장과 버린 문장·사유 |
 | llm_log.jsonl | LLM 프롬프트·응답 원문(2단계) |
+| (data/work/<case>/ocr/<이미지>.txt) | 캡처 OCR 전문(3단계). 보고서의 `[이미지명:줄]` 각주가 이 파일의 줄을 가리킨다 |
+| ../crosscase/shared.md, shared.json | 두 사건 이상에 등장한 값과 사건별 근거(3단계). 전부 needs_review |
 | evaluate.md / .json | labels.json 대비 재현율·정밀도, 보고서 근거 없는 비율, 역할 정확도, 경위 통과 비율 |
 | run.log | 실행 로그 |
 
@@ -51,6 +62,11 @@ python scripts/run_all.py --case data/synthetic/case01 --llm ollama --model qwen
 - 역할: 참여자별 서류철(통계 + 번호 붙은 표본 메시지)만 보여 주고, 표본에 있는 행 번호만 근거로 인정한다. 근거가 없으면 unknown. 피해자는 사건 정보로 고정.
 - 사건 경위: confirmed 일람표의 근거 행과 역할 근거 행만 '자료 묶음'으로 준다. 문장마다 (1) 인용이 자료 묶음 안에 있고 (2) 금액·계좌·전화·긴 숫자열이 인용 행에 실제로 있고 (3) 참여자 이름이 인용 행의 발신자이거나 본문에 있어야 통과한다. 하나라도 어기면 needs_review 로 뺀다.
 - 통과한 문장도 보고서에서 "검토 필요"로 표시된다. 확정은 사람이 한다.
+
+## 3단계 규칙
+
+- 캡처: 시각은 파일명(Screenshot_20260822-103052.png 등)에서 읽고, 없으면 파일 수정 시각을 쓰되 ts_inferred 로 표시한다. OCR 줄마다 Event 가 되고 근거는 `[이미지명:OCR 줄]` 이다. 캡처에서 읽은 계좌·금액은 일람표 행의 보조 근거로만 붙고 confirmed 판정에는 쓰지 않는다(본인 이체 완료 화면은 이체 사실의 증거이지 대화에서 유도됐다는 증거가 아니다).
+- 교차 조회: 두 사건 이상에 같은 계좌·전화·URL·지갑이 있으면 묶어서 보여 주고, 어느 사건에서든 confirmed 입금 계좌였으면 표시한다. 같은 조직인지의 판단은 사람이 한다.
 
 ## 확인이 필요한 것
 
