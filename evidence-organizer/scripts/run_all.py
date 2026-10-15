@@ -6,7 +6,7 @@
 
 사용:
   python scripts/run_all.py --case data/synthetic/case01 [--out out/case01] [--victim 이름]
-                            [--llm auto|ollama|none] [--model qwen2.5:7b] [--ollama-url http://127.0.0.1:11434]
+                            [--llm auto|ollama|none] [--model qwen2.5:7b] [--ollama-url http://127.0.0.1:11434] [--llm-timeout 300]
   --llm auto(기본): 127.0.0.1 의 Ollama 에 모델이 있으면 2단계를 돌리고, 없으면 건너뛰고 로그에 남긴다.
 
 입력: <case>/raw/ 아래의 원본(읽기 전용). *.txt 는 카카오톡 내보내기, *.csv 는 은행 이체내역으로 본다.
@@ -72,13 +72,13 @@ def parse_raw(raw_dir: Path, victim: str, log: logging.Logger) -> list[Event]:
     return events
 
 
-def make_llm(mode: str, *, model: str, url: str, out_dir: Path, log: logging.Logger) -> LLMClient | None:
+def make_llm(mode: str, *, model: str, url: str, out_dir: Path, log: logging.Logger, timeout: float = 300.0) -> LLMClient | None:
     """--llm 옵션에 따라 클라이언트를 만든다. auto 는 Ollama 가 응답할 때만."""
     if mode == "none":
         log.info("LLM 미사용(--llm none): 2단계 건너뜀")
         return None
     try:
-        client = OllamaClient(url=url, model=model, log=CallLog(path=out_dir / "llm_log.jsonl"))
+        client = OllamaClient(url=url, model=model, timeout=timeout, log=CallLog(path=out_dir / "llm_log.jsonl"))
     except LLMError as e:
         raise SystemExit(f"LLM 설정 오류: {e}") from e
     if client.is_available():
@@ -91,7 +91,7 @@ def make_llm(mode: str, *, model: str, url: str, out_dir: Path, log: logging.Log
 
 
 def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMClient | None = None, llm_mode: str = "none",
-        model: str = DEFAULT_MODEL, ollama_url: str = DEFAULT_OLLAMA_URL) -> dict:
+        model: str = DEFAULT_MODEL, ollama_url: str = DEFAULT_OLLAMA_URL, llm_timeout: float = 300.0) -> dict:
     log = setup_logging(out_dir)
     raw_dir = case_dir / "raw"
     now = datetime.now(KST)
@@ -122,7 +122,7 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMCli
 
     # 6~7. 2단계: 역할 분류, 사건 경위 (로컬 LLM)
     if llm is None:
-        llm = make_llm(llm_mode, model=model, url=ollama_url, out_dir=out_dir, log=log)
+        llm = make_llm(llm_mode, model=model, url=ollama_url, out_dir=out_dir, log=log, timeout=llm_timeout)
     roles = classify_roles(timeline, victim=victim, llm=llm)
     write_json([r.to_dict() for r in roles], out_dir / "roles.json")
     log.info("역할 판정: %s", {r.actor: r.role for r in roles})
@@ -177,9 +177,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--llm", choices=["auto", "ollama", "none"], default="auto", help="2단계 로컬 LLM 사용 여부 (기본 auto)")
     ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama 모델 이름 (기본 {DEFAULT_MODEL})")
     ap.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Ollama 주소. 루프백만 허용")
+    ap.add_argument("--llm-timeout", type=float, default=300.0, help="LLM 호출 1회 제한 시간(초). 느린 CPU 면 늘린다 (기본 300)")
     args = ap.parse_args(argv)
     out = args.out or (ROOT / "out" / args.case.name)
-    run(args.case, out, args.victim, llm_mode=args.llm, model=args.model, ollama_url=args.ollama_url)
+    run(args.case, out, args.victim, llm_mode=args.llm, model=args.model, ollama_url=args.ollama_url, llm_timeout=args.llm_timeout)
     return 0
 
 

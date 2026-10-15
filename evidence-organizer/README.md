@@ -16,8 +16,11 @@ python -m pytest
 
 ```bash
 ollama pull qwen2.5:7b                                    # 한국어 되는 소형 모델이면 무엇이든
+python scripts/check_llm.py --model qwen2.5:7b            # 연결·모델·속도 점검, 예상 소요 시간 출력
 python scripts/run_all.py --case data/synthetic/case01 --llm ollama --model qwen2.5:7b
 ```
+
+사건 하나당 LLM 호출은 6회(역할 5 + 경위 1)뿐이라 GPU 없이 CPU 로도 된다. 메모리가 작으면 모델을 줄인다: 8GB 는 `qwen2.5:1.5b`, 16GB 는 `qwen2.5:3b`. CPU 가 느려 끊기면 `--llm-timeout 600`.
 
 루프백이 아닌 주소는 `--ollama-url` 로 줘도 거부한다. 프롬프트와 응답은 전부 `out/<case>/llm_log.jsonl` 에 남는다.
 
