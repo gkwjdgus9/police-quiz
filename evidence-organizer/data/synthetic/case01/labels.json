@@ -1,0 +1,186 @@
+{
+  "case": "case01",
+  "victim": "이수진",
+  "participants": {
+    "이수진": "victim",
+    "박대표": "operator",
+    "김실장": "assistant",
+    "최민수": "unrelated",
+    "정하나": "unrelated"
+  },
+  "fraud_transfers": [
+    {
+      "ts": "2026-08-22T10:30:41+09:00",
+      "to_account": "3521234567893",
+      "to_account_raw": "352-1234-5678-93",
+      "bank": "농협",
+      "amount": 3000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 3
+      }
+    },
+    {
+      "ts": "2026-08-25T14:10:05+09:00",
+      "to_account": "3521234567893",
+      "to_account_raw": "352-1234-5678-93",
+      "bank": "농협",
+      "amount": 5000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 4
+      }
+    },
+    {
+      "ts": "2026-08-28T11:05:17+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 10000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 6
+      }
+    },
+    {
+      "ts": "2026-09-01T09:50:02+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 2000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 8
+      }
+    },
+    {
+      "ts": "2026-09-03T16:20:48+09:00",
+      "to_account": "3521234567893",
+      "to_account_raw": "352-1234-5678-93",
+      "bank": "농협",
+      "amount": 7000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 10
+      }
+    },
+    {
+      "ts": "2026-09-05T10:15:29+09:00",
+      "to_account": "110456789012",
+      "to_account_raw": "110-456-789012",
+      "bank": "신한",
+      "amount": 4500000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 11
+      }
+    },
+    {
+      "ts": "2026-09-08T13:40:36+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 15000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 13
+      }
+    },
+    {
+      "ts": "2026-09-10T11:30:54+09:00",
+      "to_account": "3521234567893",
+      "to_account_raw": "352-1234-5678-93",
+      "bank": "농협",
+      "amount": 3000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 15
+      }
+    },
+    {
+      "ts": "2026-09-12T15:05:22+09:00",
+      "to_account": "110456789012",
+      "to_account_raw": "110-456-789012",
+      "bank": "신한",
+      "amount": 20000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 16
+      }
+    },
+    {
+      "ts": "2026-09-15T10:40:47+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 6000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 18
+      }
+    },
+    {
+      "ts": "2026-09-18T14:25:15+09:00",
+      "to_account": "110456789012",
+      "to_account_raw": "110-456-789012",
+      "bank": "신한",
+      "amount": 8000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 19
+      }
+    },
+    {
+      "ts": "2026-09-22T09:55:38+09:00",
+      "to_account": "3521234567893",
+      "to_account_raw": "352-1234-5678-93",
+      "bank": "농협",
+      "amount": 12000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 21
+      }
+    }
+  ],
+  "fraud_total": 95500000,
+  "chat": {
+    "accounts": [
+      "110456789012",
+      "12345604567890",
+      "3333051234567",
+      "3521234567893"
+    ],
+    "fraud_accounts": [
+      "110456789012",
+      "3333051234567",
+      "3521234567893"
+    ],
+    "phones": [
+      "01022334455",
+      "01045678910",
+      "025123456",
+      "16001234"
+    ],
+    "urls": [
+      "http://bit.ly/4gL9xQz",
+      "https://finance.naver.com/item/main.naver?code=005930",
+      "https://goldline-invest.top/app",
+      "https://t.me/goldline_vip",
+      "www.kstock-pro.xyz/login"
+    ],
+    "wallets": [
+      "0x5182b78c5010ed50ef13261e6f0e587c443911cb",
+      "TEDVX1uu32gDauUySdimshiizSvFsYkw4F",
+      "bc1q06aaqjdzng07ue30t6qm8e78v8ekkrz99pttnh"
+    ],
+    "amount_mentions_korean_unit": [
+      "500만원",
+      "700만원",
+      "2천만원",
+      "800만원",
+      "5만원",
+      "6천만원"
+    ]
+  },
+  "message_count": 362
+}
