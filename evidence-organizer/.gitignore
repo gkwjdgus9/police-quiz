@@ -1,0 +1,12 @@
+# 산출물과 실제 자료는 커밋하지 않는다 (합성 데이터 data/synthetic/ 만 커밋)
+out/*
+!out/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/work/*
+!data/work/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/

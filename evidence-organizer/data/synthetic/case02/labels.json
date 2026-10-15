@@ -1,0 +1,226 @@
+{
+  "case": "case02",
+  "victim": "박민재",
+  "participants": {
+    "박민재": "victim",
+    "최대표": "operator",
+    "이팀장": "assistant",
+    "강서연": "unrelated",
+    "윤태호": "unrelated"
+  },
+  "fraud_transfers": [
+    {
+      "ts": "2026-07-08T10:30:41+09:00",
+      "to_account": "3010987654321",
+      "to_account_raw": "301-0987-6543-21",
+      "bank": "농협",
+      "amount": 2000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 3
+      }
+    },
+    {
+      "ts": "2026-07-11T14:10:05+09:00",
+      "to_account": "3010987654321",
+      "to_account_raw": "301-0987-6543-21",
+      "bank": "농협",
+      "amount": 3000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 4
+      }
+    },
+    {
+      "ts": "2026-07-14T11:05:17+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 8000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 6
+      }
+    },
+    {
+      "ts": "2026-07-18T09:50:02+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 1500000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 8
+      }
+    },
+    {
+      "ts": "2026-07-20T16:20:48+09:00",
+      "to_account": "3010987654321",
+      "to_account_raw": "301-0987-6543-21",
+      "bank": "농협",
+      "amount": 4000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 10
+      }
+    },
+    {
+      "ts": "2026-07-22T10:15:29+09:00",
+      "to_account": "140012345678",
+      "to_account_raw": "140-012-345678",
+      "bank": "신한",
+      "amount": 3500000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 11
+      }
+    },
+    {
+      "ts": "2026-07-25T13:40:36+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 12000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 13
+      }
+    },
+    {
+      "ts": "2026-07-27T11:30:54+09:00",
+      "to_account": "3010987654321",
+      "to_account_raw": "301-0987-6543-21",
+      "bank": "농협",
+      "amount": 2000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 15
+      }
+    },
+    {
+      "ts": "2026-07-29T15:05:22+09:00",
+      "to_account": "140012345678",
+      "to_account_raw": "140-012-345678",
+      "bank": "신한",
+      "amount": 10000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 16
+      }
+    },
+    {
+      "ts": "2026-08-01T10:40:47+09:00",
+      "to_account": "3333051234567",
+      "to_account_raw": "3333-05-1234567",
+      "bank": "카카오뱅크",
+      "amount": 5000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 18
+      }
+    },
+    {
+      "ts": "2026-08-04T14:25:15+09:00",
+      "to_account": "140012345678",
+      "to_account_raw": "140-012-345678",
+      "bank": "신한",
+      "amount": 6000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 19
+      }
+    },
+    {
+      "ts": "2026-08-08T09:55:38+09:00",
+      "to_account": "3010987654321",
+      "to_account_raw": "301-0987-6543-21",
+      "bank": "농협",
+      "amount": 9000000,
+      "evidence": {
+        "src": "transfers_kb.csv",
+        "line": 21
+      }
+    }
+  ],
+  "fraud_total": 66000000,
+  "chat": {
+    "accounts": [
+      "140012345678",
+      "3010987654321",
+      "3333051234567",
+      "65432101234567"
+    ],
+    "fraud_accounts": [
+      "140012345678",
+      "3010987654321",
+      "3333051234567"
+    ],
+    "phones": [
+      "01055551212",
+      "01098765432",
+      "0317778888",
+      "16001234"
+    ],
+    "urls": [
+      "http://bit.ly/3kQw9Zx",
+      "https://bluechip-lab.vip/app",
+      "https://finance.naver.com/item/main.naver?code=000660",
+      "https://t.me/goldline_vip",
+      "www.bluechip-trade.site/login"
+    ],
+    "wallets": [
+      "0xfbdbce3ddb170f7a44842cef294359a3eb12a2b2",
+      "T9ocZjkTcKVC7newaFaJ4Boqthpqhii4k1",
+      "bc1qycyg68tn055uygu4d7pulyemzn697ee5vp0dhk"
+    ],
+    "amount_mentions_korean_unit": {
+      "300만원": 3000000,
+      "400만원": 4000000,
+      "1천만원": 10000000,
+      "600만원": 6000000,
+      "3만원": 30000,
+      "4천만원": 40000000
+    }
+  },
+  "known_false_positives": [
+    {
+      "to_account": "65432101234567",
+      "amount": 30000,
+      "reason": "모임 회비 - 무관한 참여자의 계좌·금액이 대화에 등장"
+    }
+  ],
+  "screenshots": {
+    "Screenshot_20260708-103052.png": {
+      "ts": "2026-07-08T10:30:52+09:00",
+      "lines": [
+        "이체가 완료되었습니다",
+        "받는 분  주식회사 블루칩",
+        "농협  301-0987-6543-21",
+        "이체 금액  2,000,000원",
+        "출금 계좌  KB국민 ****-**-**1234",
+        "거래 일시  2026.07.08 10:30",
+        "확인"
+      ],
+      "accounts": [
+        "3010987654321"
+      ],
+      "amounts": [
+        2000000
+      ]
+    }
+  },
+  "shared_with": {
+    "case01": {
+      "accounts": [
+        "3333051234567"
+      ],
+      "phones": [
+        "16001234"
+      ],
+      "urls": [
+        "https://t.me/goldline_vip"
+      ]
+    }
+  },
+  "message_count": 373
+}
