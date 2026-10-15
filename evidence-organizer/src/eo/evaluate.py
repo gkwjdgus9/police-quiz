@@ -80,11 +80,17 @@ def report_content_lines(md: str) -> list[str]:
     return out
 
 
-def evaluate_report(md: str, raw_dir: Path) -> dict[str, Any]:
+def _text_sizes(raw_dir: Path) -> dict[str, int]:
+    """텍스트 원본의 줄 수. 이미지는 OCR 결과(extra_sizes)로 따로 받는다."""
     sizes: dict[str, int] = {}
     for p in raw_dir.rglob("*"):
-        if p.is_file():
+        if p.is_file() and p.suffix.lower() in {".txt", ".csv", ".tsv", ".json", ".md"}:
             sizes[p.name] = len(p.read_bytes().decode("utf-8-sig", errors="replace").splitlines())
+    return sizes
+
+
+def evaluate_report(md: str, raw_dir: Path, extra_sizes: dict[str, int] | None = None) -> dict[str, Any]:
+    sizes = {**_text_sizes(raw_dir), **(extra_sizes or {})}
     content = report_content_lines(md)
     no_footnote: list[str] = []
     bad_ref: list[str] = []
@@ -131,12 +137,25 @@ def evaluate_roles(roles: list[dict[str, Any]], labels: dict[str, Any]) -> dict[
             "uncited": sum(1 for r in roles if r.get("role") != "unknown" and not r.get("evidence"))}
 
 
-def evaluate_narrative(narrative: list[dict[str, Any]], dropped: list[dict[str, Any]], raw_dir: Path) -> dict[str, Any]:
+def evaluate_ocr(extracted: dict[str, dict[str, Any]], labels: dict[str, Any]) -> dict[str, PR]:
+    """캡처별 OCR 추출(계좌·금액) vs labels.screenshots. 이미지 이름이 근거 src 인 값만 센다."""
+    gold_shots = labels.get("screenshots", {})
+    out: dict[str, PR] = {}
+    for key in ("accounts", "amounts"):
+        gold: set[str] = set()
+        pred: set[str] = set()
+        for name, g in gold_shots.items():
+            gold |= {f"{name}:{v}" for v in g.get(key, [])}
+            for value, evs in extracted.get(key, {}).items():
+                if any(e.get("src") == name for e in evs):
+                    pred.add(f"{name}:{value}")
+        out[key] = _pr(pred, gold)
+    return out
+
+
+def evaluate_narrative(narrative: list[dict[str, Any]], dropped: list[dict[str, Any]], raw_dir: Path, extra_sizes: dict[str, int] | None = None) -> dict[str, Any]:
     """통과한 문장 수, 버린 문장 수, 통과 문장의 각주가 실제 행을 가리키는지."""
-    sizes: dict[str, int] = {}
-    for p in raw_dir.rglob("*"):
-        if p.is_file():
-            sizes[p.name] = len(p.read_bytes().decode("utf-8-sig", errors="replace").splitlines())
+    sizes = {**_text_sizes(raw_dir), **(extra_sizes or {})}
     bad = 0
     for s in narrative:
         evs = s.get("evidence", [])
@@ -149,16 +168,19 @@ def evaluate_narrative(narrative: list[dict[str, Any]], dropped: list[dict[str, 
 
 
 def evaluate_all(*, labels: dict[str, Any], extracted: dict[str, Any], ledger: list[dict[str, Any]], report_md: str, raw_dir: Path,
+                 extra_sizes: dict[str, int] | None = None, ocr_ran: bool = False,
                  roles: list[dict[str, Any]] | None = None, narrative: list[dict[str, Any]] | None = None, narrative_dropped: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     result: dict[str, Any] = {
         "extraction": {k: v.to_dict() for k, v in evaluate_extraction(extracted, labels).items()},
         "ledger": {k: v.to_dict() for k, v in evaluate_ledger(ledger, labels).items()},
-        "report": evaluate_report(report_md, raw_dir),
+        "report": evaluate_report(report_md, raw_dir, extra_sizes),
     }
+    if ocr_ran and labels.get("screenshots"):
+        result["ocr"] = {k: v.to_dict() for k, v in evaluate_ocr(extracted, labels).items()}
     if roles is not None:
         result["roles"] = evaluate_roles(roles, labels)
     if narrative is not None:
-        result["narrative"] = evaluate_narrative(narrative, narrative_dropped or [], raw_dir)
+        result["narrative"] = evaluate_narrative(narrative, narrative_dropped or [], raw_dir, extra_sizes)
     return result
 
 
@@ -176,6 +198,14 @@ def format_table(result: dict[str, Any]) -> str:
     rows.append("| 보고서 | 문장 수 | 각주 없음 | 잘못된 각주 | 근거 없는 비율 |")
     rows.append("|---|---|---|---|---|")
     rows.append(f"| report.md | {r['sentences']} | {r['no_footnote']} | {r['bad_reference']} | {r['unsupported_ratio']:.1%} |")
+    if "ocr" in result:
+        rows.append("")
+        rows.append("| 캡처 OCR | 정답 | 예측 | TP | 재현율 | 정밀도 | 누락/오탐 |")
+        rows.append("|---|---|---|---|---|---|---|")
+        for key, label in (("accounts", "계좌번호"), ("amounts", "금액")):
+            pr = result["ocr"][key]
+            note = ", ".join([*(f"누락 {m}" for m in pr["missing"][:2]), *(f"오탐 {x}" for x in pr["extra"][:2])]) or "-"
+            rows.append(f"| {label} | {pr['tp'] + pr['fn']} | {pr['tp'] + pr['fp']} | {pr['tp']} | {pr['recall']:.0%} | {pr['precision']:.0%} | {note} |")
     if "roles" in result:
         ro = result["roles"]
         rows.append("")

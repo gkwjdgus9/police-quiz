@@ -73,7 +73,7 @@ def synthetic_report() -> tuple[str, list[ReviewItem], dict]:
 @pytest.mark.skipif(not CASE.exists(), reason="case01 미생성")
 def test_every_content_line_has_valid_footnote(synthetic_report) -> None:
     md, dropped, _ = synthetic_report
-    sizes = {p.name: len(p.read_text(encoding="utf-8-sig").splitlines()) for p in (CASE / "raw").iterdir()}
+    sizes = {p.name: len(p.read_text(encoding="utf-8-sig").splitlines()) for p in (CASE / "raw").iterdir() if p.suffix in {".txt", ".csv"}}
     content = _content_lines(md)
     assert len(content) > 20
     for line in content:

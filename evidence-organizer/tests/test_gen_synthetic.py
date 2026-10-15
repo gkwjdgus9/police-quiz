@@ -22,12 +22,17 @@ def _load_gen():
 
 
 @pytest.fixture(scope="module")
-def case_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    out = tmp_path_factory.mktemp("case01")
+def gen_root(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    out = tmp_path_factory.mktemp("synthetic")
     gen = _load_gen()
     sys.argv = ["gen_synthetic.py", "--out", str(out)]
     gen.main()
     return out
+
+
+@pytest.fixture(scope="module")
+def case_dir(gen_root: Path) -> Path:
+    return gen_root / "case01"
 
 
 def test_files_exist(case_dir: Path) -> None:
@@ -72,18 +77,45 @@ def test_labels_fraud_rows_point_at_csv(case_dir: Path) -> None:
     assert labels["fraud_total"] == sum(r["amount"] for r in labels["fraud_transfers"])
 
 
-def test_deterministic(case_dir: Path, tmp_path: Path) -> None:
+def test_deterministic(gen_root: Path, tmp_path: Path) -> None:
     gen = _load_gen()
     sys.argv = ["gen_synthetic.py", "--out", str(tmp_path)]
     gen.main()
-    for rel in ["raw/kakao_mobile.txt", "raw/transfers_kb.csv", "labels.json"]:
-        assert (tmp_path / rel).read_bytes() == (case_dir / rel).read_bytes(), rel
+    for case in ("case01", "case02"):
+        for rel in ["raw/kakao_mobile.txt", "raw/transfers_kb.csv", "labels.json"]:
+            assert (tmp_path / case / rel).read_bytes() == (gen_root / case / rel).read_bytes(), f"{case}/{rel}"
 
 
-def test_committed_case01_is_up_to_date(case_dir: Path) -> None:
-    """저장소에 커밋된 data/synthetic/case01 이 생성기 출력과 같아야 한다."""
-    committed = ROOT / "data" / "synthetic" / "case01"
+@pytest.mark.parametrize("case", ["case01", "case02"])
+def test_committed_cases_are_up_to_date(gen_root: Path, case: str) -> None:
+    """저장소에 커밋된 data/synthetic/<case> 가 생성기 출력과 같아야 한다 (PNG 는 PIL 버전에 따라 바이트가 달라 제외)."""
+    committed = ROOT / "data" / "synthetic" / case
     if not committed.exists():
-        pytest.skip("case01 미생성")
+        pytest.skip(f"{case} 미생성")
     for rel in ["raw/kakao_mobile.txt", "raw/transfers_kb.csv", "variants/kakao_pc.txt", "labels.json"]:
-        assert (committed / rel).read_bytes() == (case_dir / rel).read_bytes(), rel
+        assert (committed / rel).read_bytes() == (gen_root / case / rel).read_bytes(), rel
+
+
+def test_case02_shares_values_with_case01(gen_root: Path) -> None:
+    l1 = json.loads((gen_root / "case01" / "labels.json").read_text(encoding="utf-8"))
+    l2 = json.loads((gen_root / "case02" / "labels.json").read_text(encoding="utf-8"))
+    shared = l2["shared_with"]["case01"]
+    for key in ("accounts", "phones", "urls"):
+        assert set(shared[key]) <= set(l1["chat"][key]) and set(shared[key]) <= set(l2["chat"][key]), key
+    # 공유하지 않는 값은 실제로 달라야 한다
+    assert set(l1["chat"]["accounts"]) & set(l2["chat"]["accounts"]) == set(shared["accounts"])
+    assert set(l1["chat"]["phones"]) & set(l2["chat"]["phones"]) == set(shared["phones"])
+    assert l1["victim"] != l2["victim"]
+
+
+def test_screenshot_labels_match_image(case_dir: Path) -> None:
+    labels = json.loads((case_dir / "labels.json").read_text(encoding="utf-8"))
+    if not labels["screenshots"]:
+        pytest.skip("PIL/한글 폰트 없음")
+    (name, shot), = labels["screenshots"].items()
+    png = case_dir / "raw" / name
+    assert png.exists() and png.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert name.startswith("Screenshot_20260822-1030")
+    joined = "\n".join(shot["lines"])
+    assert "352-1234-5678-93" in joined and "3,000,000원" in joined
+    assert shot["accounts"] == ["3521234567893"] and shot["amounts"] == [3_000_000]

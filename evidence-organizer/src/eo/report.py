@@ -108,9 +108,13 @@ def build_report(
     for e in events:
         by_src.setdefault(e.src, []).append(e)
     for src, evs in sorted(by_src.items()):
-        kinds = Counter(e.kind for e in evs)
+        cited = [e for e in evs if e.line > 0]  # line 0 은 OCR 결과가 없는 캡처 → 근거로 쓸 수 없다
+        if not cited:
+            b.comment(f"파일 {src}: 읽을 수 있는 텍스트 없음(OCR 미실행 또는 실패) → needs_review")
+            continue
+        kinds = Counter(e.kind for e in cited)
         desc = ", ".join(f"{k} {n}건" for k, n in sorted(kinds.items()))
-        b.sentence(f"파일 `{src}`에서 이벤트 {len(evs)}건({desc})을 읽었다.", [evs[0].evidence, evs[-1].evidence])
+        b.sentence(f"파일 `{src}`에서 이벤트 {len(cited)}건({desc})을 읽었다.", [cited[0].evidence, cited[-1].evidence])
 
     # 2. 대화 개요 --------------------------------------------------------------
     b.heading("2. 대화 개요")

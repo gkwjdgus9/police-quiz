@@ -2,11 +2,13 @@
 
   1단계: hashing → parsers → extract → timeline → ledger
   2단계: roles(참여자 역할) → narrative(사건 경위)   ※ 로컬 Ollama 가 있을 때만
+  3단계: 캡처 이미지 OCR(로컬 tesseract 가 있을 때만), 사건 간 교차는 scripts/cross_cases.py
   마무리: report → evaluate
 
 사용:
   python scripts/run_all.py --case data/synthetic/case01 [--out out/case01] [--victim 이름]
                             [--llm auto|ollama|none] [--model qwen2.5:7b] [--ollama-url http://127.0.0.1:11434] [--llm-timeout 300]
+                            [--ocr auto|tesseract|none] [--work data/work]
   --llm auto(기본): 127.0.0.1 의 Ollama 에 모델이 있으면 2단계를 돌리고, 없으면 건너뛰고 로그에 남긴다.
 
 입력: <case>/raw/ 아래의 원본(읽기 전용). *.txt 는 카카오톡 내보내기, *.csv 는 은행 이체내역으로 본다.
@@ -32,8 +34,10 @@ from eo.hashing import build_or_verify_manifest, git_hash  # noqa: E402
 from eo.ledger import build_ledger  # noqa: E402
 from eo.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, CallLog, LLMClient, LLMError, OllamaClient  # noqa: E402
 from eo.narrative import generate_narrative  # noqa: E402
+from eo.ocr import OCREngine, TesseractOCR  # noqa: E402
 from eo.parsers.bank_csv import parse_bank_csv  # noqa: E402
 from eo.parsers.kakao import parse_kakao  # noqa: E402
+from eo.parsers.screenshot import IMAGE_SUFFIXES, parse_screenshot  # noqa: E402
 from eo.report import build_report, write_report  # noqa: E402
 from eo.roles import classify_roles  # noqa: E402
 from eo.schema import KST, Event, LedgerRow, ReviewItem  # noqa: E402
@@ -55,11 +59,29 @@ def setup_logging(out_dir: Path) -> logging.Logger:
     return logger
 
 
-def parse_raw(raw_dir: Path, victim: str, log: logging.Logger) -> list[Event]:
+def make_ocr(mode: str, log: logging.Logger) -> OCREngine | None:
+    if mode == "none":
+        log.info("OCR 미사용(--ocr none)")
+        return None
+    engine = TesseractOCR()
+    if engine.is_available():
+        log.info("로컬 OCR 사용: tesseract (%s)", engine.lang)
+        return engine
+    if mode == "tesseract":
+        raise SystemExit("tesseract 가 없거나 kor 언어 데이터가 없습니다. (apt install tesseract-ocr tesseract-ocr-kor 등)")
+    log.info("tesseract 없음 → 캡처는 해시만 기록하고 OCR 은 needs_review")
+    return None
+
+
+def parse_raw(raw_dir: Path, victim: str, log: logging.Logger, *, ocr: OCREngine | None = None, ocr_work_dir: Path | None = None) -> list[Event]:
     events: list[Event] = []
     for path in sorted(p for p in raw_dir.rglob("*") if p.is_file() and not p.name.startswith(".")):
         suffix = path.suffix.lower()
-        if suffix == ".txt":
+        if suffix in IMAGE_SUFFIXES:
+            evs = list(parse_screenshot(path, ocr=ocr, work_dir=ocr_work_dir))
+            n_text = sum(1 for e in evs if e.line > 0)
+            log.info("캡처 %s → OCR 줄 %d건 (%s)", path.name, n_text, evs[0].meta.get("ocr"))
+        elif suffix == ".txt":
             evs = list(parse_kakao(path))
             log.info("카카오톡 파싱 %s → %d건", path.name, len(evs))
         elif suffix == ".csv":
@@ -91,7 +113,8 @@ def make_llm(mode: str, *, model: str, url: str, out_dir: Path, log: logging.Log
 
 
 def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMClient | None = None, llm_mode: str = "none",
-        model: str = DEFAULT_MODEL, ollama_url: str = DEFAULT_OLLAMA_URL, llm_timeout: float = 300.0) -> dict:
+        model: str = DEFAULT_MODEL, ollama_url: str = DEFAULT_OLLAMA_URL, llm_timeout: float = 300.0,
+        ocr: OCREngine | None = None, ocr_mode: str = "none", work_dir: Path | None = None) -> dict:
     log = setup_logging(out_dir)
     raw_dir = case_dir / "raw"
     now = datetime.now(KST)
@@ -106,8 +129,11 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMCli
     manifest = build_or_verify_manifest(raw_dir, out_dir / "manifest.json", repo_dir=ROOT, now=now)
     log.info("manifest: 파일 %d개, 실행 %d회째", len(manifest.files), len(manifest.runs))
 
-    # 2~4. 파싱 → 추출 → 타임라인
-    events = parse_raw(raw_dir, victim, log)
+    # 2~4. 파싱 → 추출 → 타임라인 (캡처는 3단계 OCR)
+    if ocr is None:
+        ocr = make_ocr(ocr_mode, log)
+    ocr_work_dir = (work_dir or (ROOT / "data" / "work")) / case_dir.name / "ocr"
+    events = parse_raw(raw_dir, victim, log, ocr=ocr, ocr_work_dir=ocr_work_dir)
     timeline, reviews = build_timeline(events)
     write_timeline_jsonl(timeline, out_dir / "timeline.jsonl")
     extracted = aggregate_extracted(timeline)
@@ -136,6 +162,10 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMCli
                                roles=roles, narrative=narrative, llm_name=f"{llm.name}/{getattr(llm, 'model', '')}" if llm else "")
     write_report(md, out_dir / "report.md")
     all_reviews = [*reviews, *dropped, *narrative_dropped]
+    for e in timeline:
+        if e.kind == "screenshot" and e.line == 0:
+            why = {"none": "OCR 엔진 없음", "error": f"OCR 실패: {e.meta.get('error', '')}"}.get(str(e.meta.get("ocr")), "OCR 결과 비어 있음")
+            all_reviews.append(ReviewItem(category="screenshot_no_ocr", reason=f"{why} — 캡처 내용은 사람이 확인", value=e.src))
     for r in roles:
         if r.status != "confirmed":
             all_reviews.append(ReviewItem(category="role", reason=f"{r.role} ({r.confidence:.0%}) {r.reason}", value=r.actor, evidence=list(r.evidence)))
@@ -150,7 +180,9 @@ def run(case_dir: Path, out_dir: Path, victim: str | None = None, *, llm: LLMCli
     labels_path = case_dir / "labels.json"
     if labels_path.exists():
         labels = json.loads(labels_path.read_text(encoding="utf-8"))
+        ocr_sizes = {p.name[:-4]: len(p.read_text(encoding="utf-8").splitlines()) for p in ocr_work_dir.glob("*.txt")} if ocr_work_dir.exists() else {}
         result = evaluate_all(labels=labels, extracted=extracted, ledger=[r.to_dict() for r in ledger], report_md=md, raw_dir=raw_dir,
+                              extra_sizes=ocr_sizes, ocr_ran=ocr is not None,
                               roles=[r.to_dict() for r in roles],
                               narrative=[s.to_dict() for s in narrative] if llm else None,
                               narrative_dropped=[d.to_dict() for d in narrative_dropped])
@@ -178,9 +210,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama 모델 이름 (기본 {DEFAULT_MODEL})")
     ap.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Ollama 주소. 루프백만 허용")
     ap.add_argument("--llm-timeout", type=float, default=300.0, help="LLM 호출 1회 제한 시간(초). 느린 CPU 면 늘린다 (기본 300)")
+    ap.add_argument("--ocr", choices=["auto", "tesseract", "none"], default="auto", help="캡처 이미지 OCR (기본 auto: tesseract 있으면 사용)")
+    ap.add_argument("--work", type=Path, default=ROOT / "data" / "work", help="OCR 결과 텍스트 등 중간 산출물 폴더")
     args = ap.parse_args(argv)
     out = args.out or (ROOT / "out" / args.case.name)
-    run(args.case, out, args.victim, llm_mode=args.llm, model=args.model, ollama_url=args.ollama_url, llm_timeout=args.llm_timeout)
+    run(args.case, out, args.victim, llm_mode=args.llm, model=args.model, ollama_url=args.ollama_url, llm_timeout=args.llm_timeout,
+        ocr_mode=args.ocr, work_dir=args.work)
     return 0
 
 
