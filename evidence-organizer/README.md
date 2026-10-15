@@ -3,7 +3,16 @@
 사이버사기 피해자 제출 자료(카카오톡 내보내기, 은행 이체내역 CSV)에서 타임라인·추출물·범죄일람표·수사보고서 초안을 만든다.
 설계 원칙과 구조는 [CLAUDE.md](CLAUDE.md) 참고. 1단계는 LLM 없이 결정적 코드만 쓰고, 2단계는 localhost 의 Ollama 로 참여자 역할 분류와 사건 경위 서술을 '제안'하며, 3단계는 캡처 이미지 OCR(로컬 tesseract)과 사건 간 계좌·번호·URL·지갑 교차 조회를 한다.
 
-## 더블클릭으로 실행 (로컬 앱)
+## 한 파일로 실행 (evidence-organizer.pyz)
+
+```bash
+python scripts/build_pyz.py        # dist/evidence-organizer.pyz 생성 (코드 + 합성 사건 + 문서)
+```
+
+받는 쪽은 Python 3.11 이상만 있으면 된다. Windows 는 `evidence-organizer.pyz` 더블클릭, Mac/Linux 는 `python3 evidence-organizer.pyz`.
+파일 옆에 `evidence-organizer-data/` 폴더가 생기고 업로드한 원본(data/raw)과 산출물(out)은 전부 거기에만 쓴다. `--port 8765 --no-browser` 옵션이 있다.
+
+## 더블클릭으로 실행 (저장소 폴더에서)
 
 Python 3.11 이상만 설치돼 있으면 된다. 추가 설치 없음.
 

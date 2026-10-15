@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import re
@@ -20,6 +21,7 @@ import sys
 import threading
 import traceback
 import webbrowser
+import zipfile
 from email.parser import BytesParser
 from email.policy import default as email_policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -27,6 +29,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
 ROOT = Path(__file__).resolve().parent
+# 한 파일(.pyz)로 묶여 실행 중이면 ROOT 의 상위 어딘가가 '파일'이다. 그 파일 옆의 <이름>-data/ 를 쓰기 공간으로 쓴다.
+ARCHIVE: Path | None = next((p for p in [ROOT, *ROOT.parents] if p.is_file()), None)
+HOME = ARCHIVE.parent / f"{ARCHIVE.stem}-data" if ARCHIVE else ROOT
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -35,10 +40,25 @@ import cross_cases  # noqa: E402
 
 from eo.mdhtml import md_to_html  # noqa: E402
 
-DATA_RAW = ROOT / "data" / "raw"
-DATA_SYN = ROOT / "data" / "synthetic"
-OUT = ROOT / "out"
-WORK = ROOT / "data" / "work"
+DATA_RAW = HOME / "data" / "raw"
+DATA_SYN = HOME / "data" / "synthetic"
+OUT = HOME / "out"
+WORK = HOME / "data" / "work"
+
+
+def unpack_bundled_synthetic() -> None:
+    """.pyz 안에 묶인 합성 사건을 쓰기 공간에 한 번 풀어 둔다 (이미 있으면 건드리지 않는다)."""
+    if ARCHIVE is None:
+        return
+    with zipfile.ZipFile(ARCHIVE) as z:
+        for info in z.infolist():
+            if not info.filename.startswith("data/synthetic/") or info.is_dir():
+                continue
+            target = HOME / info.filename
+            if target.exists():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(z.read(info))
 ALLOWED_SUFFIXES = {".txt", ".csv", ".png", ".jpg", ".jpeg"}
 CASE_NAME = re.compile(r"^[A-Za-z0-9가-힣_-]{1,40}$")
 
@@ -278,7 +298,7 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         if u.path == "/cross":
             try:
-                cross_cases.run(OUT)
+                cross_cases.run(OUT, labels_root=DATA_SYN)
             except SystemExit as e:
                 self._send(page("교차 조회", f'<div class="panel"><span class="pill bad">실패</span> {E(str(e))} <a href="/">목록</a></div>'))
                 return
@@ -331,21 +351,31 @@ class Handler(BaseHTTPRequestHandler):
         return ""
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    ap = argparse.ArgumentParser(description="증거 정리기 로컬 앱")
+    ap.add_argument("--port", type=int, default=0, help="고정 포트 (기본: 빈 포트 자동)")
+    ap.add_argument("--no-browser", action="store_true", help="브라우저를 자동으로 열지 않음")
+    args = ap.parse_args(argv)
+
     DATA_RAW.mkdir(parents=True, exist_ok=True)
     OUT.mkdir(parents=True, exist_ok=True)
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    unpack_bundled_synthetic()
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     port = server.server_address[1]
     url = f"http://127.0.0.1:{port}/"
     print(f"증거 정리기 앱: {url}  (이 창을 닫으면 앱이 종료됩니다)")
-    threading.Timer(0.5, lambda: webbrowser.open(url)).start()
+    print(f"자료·산출물 폴더: {HOME}")
+    sys.stdout.flush()
+    if not args.no_browser:
+        threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
         server.server_close()
-        shutil.rmtree(ROOT / "__pycache__", ignore_errors=True)
+        if ARCHIVE is None:
+            shutil.rmtree(ROOT / "__pycache__", ignore_errors=True)
 
 
 if __name__ == "__main__":
