@@ -5,6 +5,8 @@
   needs_review : 그 외 전부(계좌만 일치, 금액만 일치, 둘 다 불일치, 상대 계좌 없음). notes 에 사유를 적는다.
 입금 건은 피해자의 송금이 아니므로 일람표에 넣지 않는다.
 모든 행의 evidence 에는 CSV 행이 반드시 들어가고, 일치한 대화 행이 덧붙는다.
+캡처 OCR(screenshot) 행은 계좌·금액이 맞으면 evidence 에 덧붙이되 status 판정에는 쓰지 않는다
+(피해자 본인의 이체 완료 화면은 이체가 있었다는 증거이지, 대화에서 유도됐다는 증거가 아니다).
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ def _unique_sorted(evidence: Iterable[Evidence]) -> list[Evidence]:
 def build_ledger(events: Iterable[Event], *, victim: str) -> list[LedgerRow]:
     events = list(events)
     messages = [e for e in events if e.kind == "message"]
+    screenshots = [e for e in events if e.kind == "screenshot" and e.line > 0]
     transfers = [e for e in events if e.kind == "transfer"]
 
     # 대화 속 계좌/금액 → 근거 행 색인
@@ -31,6 +34,15 @@ def build_ledger(events: Iterable[Event], *, victim: str) -> list[LedgerRow]:
             account_index.setdefault(str(acc), []).append(m.evidence)
         for amt in m.extracted.get("amounts", []):
             amount_index.setdefault(int(amt), []).append(m.evidence)
+
+    # 캡처 색인(보조 근거)
+    shot_account_index: dict[str, list[Evidence]] = {}
+    shot_amount_index: dict[int, list[Evidence]] = {}
+    for sh in screenshots:
+        for acc in sh.extracted.get("accounts", []):
+            shot_account_index.setdefault(str(acc), []).append(sh.evidence)
+        for amt in sh.extracted.get("amounts", []):
+            shot_amount_index.setdefault(int(amt), []).append(sh.evidence)
 
     rows: list[LedgerRow] = []
     for t in transfers:
@@ -60,6 +72,11 @@ def build_ledger(events: Iterable[Event], *, victim: str) -> list[LedgerRow]:
         else:
             status = "needs_review"
             notes.append("대화에서 계좌·금액 모두 확인되지 않음")
+
+        shot_hits = (shot_account_index.get(to_account, []) if to_account else []) + shot_amount_index.get(amount, [])
+        if shot_hits:
+            evidence += shot_hits
+            notes.append(f"캡처 OCR 에서 계좌/금액 {len(set(shot_hits))}건 일치(보조 근거)")
 
         rows.append(LedgerRow(
             ts=t.ts,

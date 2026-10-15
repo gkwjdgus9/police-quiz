@@ -31,10 +31,10 @@ def build_timeline(events: Iterable[Event]) -> tuple[list[Event], list[ReviewIte
     return out, reviews
 
 
-def aggregate_extracted(events: Iterable[Event], *, kinds: tuple[str, ...] = ("message",)) -> dict[str, dict[str, list[dict[str, Any]]]]:
+def aggregate_extracted(events: Iterable[Event], *, kinds: tuple[str, ...] = ("message", "screenshot")) -> dict[str, dict[str, list[dict[str, Any]]]]:
     """추출값별 근거 목록. {"accounts": {"3521234567893": [{"src","line"}, ...]}, ...}
 
-    기본적으로 대화(message)에서 추출된 값만 집계한다. 이체 CSV 의 계좌는 구조화 컬럼에서 온 것이라 따로 다룬다.
+    기본적으로 대화(message)와 캡처 OCR(screenshot)에서 추출된 값을 집계한다. 이체 CSV 의 계좌는 구조화 컬럼에서 온 것이라 따로 다룬다.
     """
     agg: dict[str, dict[str, list[dict[str, Any]]]] = {k: {} for k in EXTRACTED_KEYS}
     for ev in events:

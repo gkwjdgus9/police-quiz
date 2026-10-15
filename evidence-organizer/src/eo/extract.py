@@ -195,11 +195,11 @@ def extract_all(text: str) -> Extraction:
 
 
 def enrich_event(event: Event) -> list[str]:
-    """message 이벤트의 text 에서 추출해 event.extracted 를 채운다. 보류 금액 원문을 돌려준다.
+    """message·screenshot 이벤트의 text 에서 추출해 event.extracted 를 채운다. 보류 금액 원문을 돌려준다.
 
     transfer 이벤트는 파서가 구조화 컬럼에서 이미 채웠으므로 건드리지 않는다.
     """
-    if event.kind != "message":
+    if event.kind not in ("message", "screenshot"):
         return []
     ex = extract_all(event.text)
     event.extracted = ex.as_extracted()
