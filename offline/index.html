@@ -422,7 +422,7 @@ function caseHtml(raw){
   if(m){ cite = m[2].trim(); const rest = m[1].replace(/[,\s]+$/,'').trim(); text = text.replace(m[0], rest ? `(${rest})` : '').replace(/\s{2,}/g,' ').trim(); }
   let lead = '';
   const lm = text.match(/^(.{6,30}?)(?=\(|\s*→|,\s|$)/);
-  if(lm) lead = lm[1]; else { const sp = text.indexOf(' ', 12); if(sp>0 && sp<26) lead = text.slice(0, sp); }
+  if(lm) lead = lm[1]; else { let ls=-1; for(let i=8;i<Math.min(text.length,24);i++){ if(text[i]===' ') ls=i; } if(ls>8) lead = text.slice(0, ls); }
   // 글자 수 제한에 걸려 어절 중간에서 끊겼으면 마지막 띄어쓰기까지로 물림
   if(lead && lead.length>=28 && !/^[(→,]/.test(text.slice(lead.length).trim())){ const ls = lead.lastIndexOf(' '); if(ls>8) lead = lead.slice(0, ls); }
   let html = lead ? `<b>${esc(lead)}</b>${esc(text.slice(lead.length))}` : esc(text);
