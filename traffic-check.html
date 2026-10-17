@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e3a5f">
+<title>교통사고 공소권 판단 도구</title>
+<meta name="description" content="교통사고처리특례법 제3조·제4조에 따른 형사처벌(공소권) 판단 체크리스트. 개인정보 입력 없음, 저장·전송 없음.">
+<style>
+:root {
+  --bg: #ffffff; --bg2: #f8fafc; --card: #ffffff; --card2: #f1f5f9;
+  --border: #e2e8f0; --accent: #3b82f6; --accent2: #2563eb;
+  --green: #16a34a; --red: #dc2626; --yellow: #d97706;
+  --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+  --red-bg: #fef2f2; --green-bg: #f0fdf4; --yellow-bg: #fffbeb; --blue-bg: #eff6ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg2); color: var(--text); font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; line-height: 1.55; }
+header { background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%); color: #fff; padding: 20px 16px 0; }
+header h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+header p { font-size: 12px; color: #dbeafe; margin-top: 4px; }
+.tabs { display: flex; gap: 4px; margin-top: 14px; }
+.tab { flex: 1; background: rgba(255,255,255,0.15); color: #fff; border: none; padding: 10px 4px; font-size: 13px; font-weight: 700; border-radius: 10px 10px 0 0; cursor: pointer; }
+.tab.active { background: var(--bg2); color: var(--accent2); }
+main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
+.panel { display: none; } .panel.active { display: block; }
+.notice { background: var(--blue-bg); border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; font-size: 12px; color: #1e40af; margin-bottom: 14px; }
+.notice b { display: block; margin-bottom: 3px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; margin-bottom: 12px; }
+.step-no { font-size: 11px; font-weight: 700; color: var(--accent2); letter-spacing: 0.5px; }
+.card h2 { font-size: 15px; font-weight: 800; margin: 2px 0 4px; }
+.card .hint { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.opts { display: flex; flex-direction: column; gap: 7px; }
+.opts.row { flex-direction: row; flex-wrap: wrap; }
+.opt { display: flex; gap: 10px; align-items: flex-start; background: var(--card2); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13.5px; }
+.opt input { margin-top: 3px; accent-color: var(--accent2); flex-shrink: 0; }
+.opt.sel { border-color: var(--accent); background: var(--blue-bg); }
+.opt small { display: block; color: var(--text2); font-size: 11.5px; margin-top: 2px; }
+.item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+.item-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card2); }
+.item-head .no { width: 22px; height: 22px; border-radius: 50%; background: var(--accent2); color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.item-head .nm { flex: 1; font-size: 13.5px; font-weight: 700; }
+.item-head .nm small { display: block; font-weight: 500; color: var(--text2); font-size: 11px; }
+.tri { display: flex; gap: 4px; padding: 8px 12px; }
+.tri button { flex: 1; border: 1.5px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 2px; font-size: 12.5px; font-weight: 700; color: var(--text2); cursor: pointer; }
+.tri button.y.on { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+.tri button.u.on { background: var(--yellow-bg); border-color: var(--yellow); color: var(--yellow); }
+.tri button.n.on { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.detail { display: none; padding: 0 12px 12px; font-size: 12.5px; }
+.detail.open { display: block; }
+.toggle { background: none; border: none; color: var(--accent2); font-size: 12px; font-weight: 700; cursor: pointer; padding: 4px 12px 10px; }
+.ox { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
+@media (max-width: 520px) { .ox { grid-template-columns: 1fr; } }
+.ox div { border-radius: 10px; padding: 10px; }
+.ox .o { background: var(--red-bg); border: 1px solid #fecaca; }
+.ox .x { background: var(--green-bg); border: 1px solid #bbf7d0; }
+.ox h4 { font-size: 12px; margin-bottom: 4px; }
+.ox .o h4 { color: var(--red); } .ox .x h4 { color: var(--green); }
+.ox ul, .detail ul, .result ul, .law ul { padding-left: 16px; }
+.ox li, .detail li { margin: 2px 0; }
+.cases { background: var(--bg2); border-radius: 10px; padding: 10px; margin-top: 6px; }
+.cases h4 { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.cases li { margin: 3px 0; }
+.btn { display: block; width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 800; cursor: pointer; margin: 6px 0 14px; }
+.btn.sec { background: #fff; color: var(--accent2); border: 1.5px solid var(--accent); font-size: 13px; padding: 11px; margin: 8px 0 0; }
+.result { border-radius: 14px; padding: 16px 14px; margin-bottom: 12px; border: 1.5px solid; }
+.result.red { background: var(--red-bg); border-color: var(--red); }
+.result.green { background: var(--green-bg); border-color: var(--green); }
+.result.yellow { background: var(--yellow-bg); border-color: var(--yellow); }
+.result .verdict { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+.result.red .verdict { color: var(--red); } .result.green .verdict { color: var(--green); } .result.yellow .verdict { color: var(--yellow); }
+.result .basis { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.result h3 { font-size: 13px; margin: 12px 0 4px; color: var(--text2); }
+.result li { font-size: 13px; margin: 3px 0; }
+.result .explain { background: #fff; border-radius: 10px; padding: 12px; font-size: 13.5px; border: 1px solid var(--border); margin-top: 6px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin: 2px 4px 2px 0; }
+.tag.r { background: #fee2e2; color: var(--red); } .tag.y { background: #fef3c7; color: var(--yellow); } .tag.g { background: #dcfce7; color: var(--green); } .tag.b { background: #dbeafe; color: var(--accent2); }
+.law h3 { font-size: 14px; margin: 14px 0 6px; color: var(--accent2); }
+.law p, .law li { font-size: 13px; margin: 4px 0; }
+.law .art { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.disc { font-size: 11.5px; color: var(--text3); margin-top: 20px; line-height: 1.6; }
+.hidden { display: none !important; }
+.sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg2) 30%); padding: 16px 0 10px; }
+.flow-hint { font-size: 12px; color: var(--text2); margin: -6px 0 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>교통사고 공소권 판단 도구</h1>
+  <p>교통사고처리특례법 제3조·제4조 기준 · 형사처벌 대상 여부 체크리스트</p>
+  <div class="tabs">
+    <button class="tab active" data-p="check">판단 체크</button>
+    <button class="tab" data-p="compare">경계 사례</button>
+    <button class="tab" data-p="law">법령 요지</button>
+  </div>
+</header>
+<main>
+
+<!-- ───────── 판단 체크 ───────── -->
+<section id="check" class="panel active">
+  <div class="notice">
+    <b>개인정보 보호 안내</b>
+    이 도구는 사고 유형만 선택식으로 입력받습니다. 실명·차량번호·사건번호·장소를 넣는 칸이 없고, 입력 내용은 저장되거나 외부로 전송되지 않습니다. 결과는 수사 판단을 돕는 참고자료이며 최종 판단은 담당자가 합니다.
+  </div>
+
+  <div class="card">
+    <div class="step-no">STEP 1</div>
+    <h2>사고 결과</h2>
+    <div class="hint">가장 중한 결과 하나를 선택합니다.</div>
+    <div class="opts" id="q-result">
+      <label class="opt"><input type="radio" name="result" value="death"><span>사망<small>업무상과실치사 · 특례 적용 없음</small></span></label>
+      <label class="opt"><input type="radio" name="result" value="injury"><span>인적 피해(상해)<small>업무상과실치상 · 특례 적용 여부 판단 대상</small></span></label>
+      <label class="opt"><input type="radio" name="result" value="property"><span>물적 피해만<small>도로교통법 제151조 업무상과실 재물손괴</small></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-no">STEP 2</div>
+    <h2>사고 후 조치</h2>
+    <div class="hint">해당하는 항목을 모두 선택합니다. 없으면 비워 둡니다.</div>
+    <div class="opts">
+      <label class="opt"><input type="checkbox" id="f-flee"><span>구호조치 없이 도주 또는 피해자 유기 후 도주<small>도로교통법 제54조 제1항 조치 불이행. 피해자가 구호가 필요한 상태였는지가 핵심 쟁점</small></span></label>
+      <label class="opt"><input type="checkbox" id="f-refuse"><span>음주측정 요구 불응<small>운전자가 채혈측정을 요청하거나 동의한 경우는 제외</small></span></label>
+    </div>
+  </div>
+
+  <div class="card" id="card-12">
+    <div class="step-no">STEP 3</div>
+    <h2>12대 중과실 해당 여부</h2>
+    <div class="hint">각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. "쟁점 보기"에서 경계 사례와 판례를 확인할 수 있습니다.</div>
+    <div id="items"></div>
+  </div>
+
+  <div class="card" id="card-victim">
+    <div class="step-no">STEP 4</div>
+    <h2>피해 정도 · 처벌의사 · 보험</h2>
+    <div class="hint">12대 중과실에 해당하지 않을 때 공소권을 좌우하는 요소입니다.</div>
+
+    <p style="font-size:13px;font-weight:700;margin:6px 0 6px">피해 정도</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="sev" value="minor"><span>일반 상해<small>치료 후 회복이 예상되는 상해</small></span></label>
+      <label class="opt"><input type="radio" name="sev" value="serious"><span>중상해 의심<small>생명 위험, 불구, 불치·난치 질병(뇌·주요장기 중대손상, 사지절단, 시각·청각·언어·생식기능 상실, 중증 화상 등). 의료기록으로 확인 필요</small></span></label>
+    </div>
+
+    <p style="font-size:13px;font-weight:700;margin:14px 0 6px">피해자 처벌의사</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="will" value="no"><span>처벌불원 의사 명시(합의서·진술)<small>1심 판결 선고 전까지 가능, 한 번 표시하면 철회 불가(형사소송법 제232조)</small></span></label>
+      <label class="opt"><input type="radio" name="will" value="yes"><span>처벌 희망 또는 합의 안 됨</span></label>
+      <label class="opt"><input type="radio" name="will" value="unknown"><span>미확인</span></label>
+    </div>
+
+    <p style="font-size:13px;font-weight:700;margin:14px 0 6px">가해 차량 보험·공제</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="ins" value="full"><span>종합보험(대인배상Ⅱ) 또는 공제 가입, 유효, 면책사유 없음<small>보험회사 작성 서면(가입사실증명)으로 확인. 치료비·배상금 전액 보장이 조건</small></span></label>
+      <label class="opt"><input type="radio" name="ins" value="none"><span>책임보험만 가입 또는 미가입<small>대인배상Ⅰ만 있으면 특례 적용 불가</small></span></label>
+      <label class="opt"><input type="radio" name="ins" value="void"><span>가입했으나 무효·해지·면책<small>운전자 한정(가족·연령) 특약 위반, 보험료 미납 해지 등으로 보험금 지급의무가 없는 경우</small></span></label>
+      <label class="opt"><input type="radio" name="ins" value="unknown"><span>미확인</span></label>
+    </div>
+  </div>
+
+  <div class="sticky"><button class="btn" id="run">판단 결과 보기</button></div>
+  <div id="out"></div>
+  <p class="disc">※ 본 도구는 교통사고처리특례법, 도로교통법, 특정범죄가중처벌등에관한법률 및 대법원 판례의 취지를 요약한 학습·실무 보조 자료입니다. 조문과 판례 번호는 반드시 원문(국가법령정보센터, 종합법률정보)으로 확인한 뒤 활용하십시오. 법령 개정이나 새 판례로 내용이 달라질 수 있습니다.</p>
+</section>
+
+<!-- ───────── 경계 사례 ───────── -->
+<section id="compare" class="panel">
+  <div class="notice"><b>유사사고, 다른 결론</b>같은 유형의 사고라도 아래 기준에 따라 형사처벌 대상(공소권 있음)과 비대상(합의·종합보험 시 공소권 없음)으로 갈립니다. 민원인 설명 시 이 비교표를 그대로 보여 주면 이해가 빠릅니다.</div>
+  <div id="compare-list"></div>
+  <p class="disc">※ 판례 번호가 표시된 항목은 대법원 판결의 취지를 요약한 것입니다. 사건에 적용하기 전에 판결 원문을 확인하십시오.</p>
+</section>
+
+<!-- ───────── 법령 요지 ───────── -->
+<section id="law" class="panel law">
+  <div class="art">
+    <h3>판단 순서 한눈에 보기</h3>
+    <ol style="padding-left:18px;font-size:13px">
+      <li><b>사망</b>이면 특례 없음 → 공소권 있음 (합의·보험 무관, 양형 참작만)</li>
+      <li><b>물적 피해만</b>이면 12대 중과실과 무관하게 반의사불벌·보험특례 적용 (단서는 치상죄에만 적용)</li>
+      <li><b>상해</b>이면 ① 도주·측정거부 ② 12대 중과실 → 하나라도 해당하면 공소권 있음</li>
+      <li>모두 비해당이면 ③ 처벌불원 의사 → 공소권 없음 ④ 종합보험 가입 → 공소권 없음(단, 중상해면 보험특례 제외)</li>
+      <li>처벌불원도 없고 종합보험도 없으면 → 공소권 있음 (합의 시 공소권 없음으로 전환)</li>
+    </ol>
+  </div>
+  <div class="art">
+    <h3>교통사고처리특례법 제3조 (처벌의 특례)</h3>
+    <p>① 차의 운전자가 교통사고로 형법 제268조의 죄(업무상과실·중과실 치사상)를 범한 경우 5년 이하의 금고 또는 2천만원 이하의 벌금.</p>
+    <p>② 차의 교통으로 업무상과실치상죄·중과실치상죄 또는 도로교통법 제151조의 죄(업무상과실 재물손괴)를 범한 운전자에 대하여는 <b>피해자의 명시적인 의사에 반하여 공소를 제기할 수 없다</b>(반의사불벌). 다만 치상죄를 범하고 ⓐ 구호조치 없이 도주하거나 유기 후 도주한 경우, ⓑ 음주측정 요구에 불응한 경우(채혈 요청·동의 시 제외), ⓒ 다음 12개 행위로 치상죄를 범한 경우에는 그러하지 아니하다.</p>
+    <ol style="padding-left:18px">
+      <li>신호기·경찰공무원 신호 위반, 통행금지·일시정지 안전표지 지시 위반</li>
+      <li>중앙선 침범, 고속도로·자동차전용도로에서 횡단·유턴·후진</li>
+      <li>제한속도 시속 20km 초과</li>
+      <li>앞지르기 방법·금지시기·금지장소 위반, 끼어들기 금지 위반, 고속도로 앞지르기 방법 위반</li>
+      <li>철길건널목 통과방법 위반</li>
+      <li>횡단보도 보행자 보호의무 위반 (도로교통법 제27조 제1항)</li>
+      <li>무면허 운전 (면허 정지·운전금지 기간 중 포함, 국제운전면허증 미소지 포함)</li>
+      <li>음주운전(혈중알코올농도 0.03% 이상) 또는 약물 영향 운전</li>
+      <li>보도 침범, 보도 횡단방법 위반</li>
+      <li>승객 추락방지의무 위반</li>
+      <li>어린이보호구역에서 어린이 안전 유의 의무 위반으로 어린이(13세 미만) 상해</li>
+      <li>화물 추락방지 조치 위반</li>
+    </ol>
+  </div>
+  <div class="art">
+    <h3>교통사고처리특례법 제4조 (보험 등에 가입된 경우의 특례)</h3>
+    <p>① 가해 차량이 보험·공제에 가입된 경우 제3조 제2항 본문의 죄(치상·재물손괴)에 대하여 공소를 제기할 수 없다. 다만 다음은 제외한다.</p>
+    <ul>
+      <li>제3조 제2항 단서에 해당하는 경우(도주·측정거부·12대 중과실)</li>
+      <li>피해자에게 생명의 위험, 불구, 불치·난치의 질병이 생긴 경우(<b>중상해</b>, 헌재 2009. 2. 26. 2005헌마764 결정 반영)</li>
+      <li>보험계약이 무효·해지되었거나 면책규정으로 보험금 지급의무가 없어진 경우</li>
+    </ul>
+    <p>② 보험·공제는 피해자의 치료비 전액과 손해배상금 전액을 보험회사가 우선 지급하는 것이어야 한다(책임보험만으로는 부족).</p>
+    <p>③ 보험 가입 사실은 보험회사·공제사업자가 작성한 <b>서면</b>으로 증명한다.</p>
+  </div>
+  <div class="art">
+    <h3>함께 검토할 가중처벌 규정</h3>
+    <ul>
+      <li><b>특가법 제5조의3 도주차량</b>: 치사상 후 구호조치 없이 도주. 치상 도주는 1년 이상 유기징역 또는 500만~3천만원 벌금, 치사 도주는 무기 또는 5년 이상. 물적 피해만 있는 도주는 특가법이 아니라 도로교통법 제148조(사고후미조치) 적용.</li>
+      <li><b>특가법 제5조의11 위험운전치사상</b>: 음주·약물로 정상적인 운전이 곤란한 상태에서 치사상. 농도 수치만이 아니라 언행·보행·사고 경위를 종합하여 판단.</li>
+      <li><b>특가법 제5조의13 어린이보호구역 치사상</b>: 보호구역에서 제한속도 준수·안전운전 의무 위반으로 13세 미만 어린이 치사상. 헌재 2023. 2. 23. 2020헌마460 합헌.</li>
+      <li><b>도로교통법 제148조의2</b> 음주운전·측정거부, <b>제152조</b> 무면허운전은 사고와 별개로 성립하는 범죄입니다.</li>
+    </ul>
+  </div>
+  <div class="art">
+    <h3>반의사불벌 처리 실무 메모</h3>
+    <ul>
+      <li>처벌불원 의사는 명시적이어야 하며, 1심 판결 선고 전까지 표시할 수 있고 철회할 수 없다(형사소송법 제232조 제3항).</li>
+      <li>미성년 피해자가 의사능력이 있으면 법정대리인 동의 없이 스스로 처벌불원 의사를 표시할 수 있다(대법원 2009. 11. 19. 2009도6058 전원합의체).</li>
+      <li>중상해 사건은 반의사불벌은 적용되지만 보험특례는 적용되지 않는다. 즉 종합보험이 있어도 피해자가 처벌을 원하면 공소권이 있다.</li>
+      <li>12대 중과실 사건에서 합의는 공소권에 영향이 없고 양형 자료가 된다.</li>
+    </ul>
+  </div>
+  <p class="disc">※ 조문 요약은 이해를 돕기 위한 것입니다. 적용 시 국가법령정보센터의 현행 조문을 확인하십시오.</p>
+</section>
+</main>
+
+<script>
+// ───────────────────────── 12대 중과실 데이터 ─────────────────────────
+const ITEMS = [
+{ id:'signal', no:1, name:'신호·지시 위반', law:'도로교통법 제5조',
+  req:'신호기·경찰 수신호 위반, 또는 통행금지·일시정지 안전표지 지시 위반이 사고의 직접 원인',
+  o:['적색 신호에 교차로 진입 중 충돌','교차로 진입 전 황색 신호로 바뀌었는데 정지선에 정지하지 않고 진입(정지 가능 여부를 묻지 않음, 대법원 2018. 12. 27. 2018도14262)','적색 점멸 신호에서 일시정지하지 않고 진입','일시정지 표지가 있는 교차로에서 정지 없이 진입','경찰관 수신호를 어기고 진행'],
+  x:['비보호좌회전 표지 교차로에서 녹색 신호에 좌회전 중 사고 → 신호위반 아님, 안전운전의무 위반(대법원 2011. 7. 28. 2011도3970)','좌회전·유턴 금지 등 진행방향 제한 표지 위반 → "통행금지·일시정지" 표지가 아니어서 제1호 적용 부정(대법원 2011도3630 취지, 원문 확인)','신호위반 후 교차로를 완전히 벗어나 상당 거리 진행한 뒤 신호와 무관하게 발생한 사고(인과관계 부정)','황색 점멸 신호(서행 의무)에서 서행 중 발생한 사고'],
+  cases:['신호위반은 위반 행위가 사고의 직접 원인이어야 하며, 신호위반과 사고 사이 인과관계가 끊어지면 제1호를 적용할 수 없다는 것이 일관된 판례 취지'],
+  ev:['신호 주기표(교통정보센터·지자체) 확보','블랙박스 영상에서 신호 변경 시점과 정지선 통과 시점 대조','교차로 CCTV','정지선 위치·교차로 구조 실측'] },
+{ id:'center', no:2, name:'중앙선 침범 · 고속도로 횡단·유턴·후진', law:'도로교통법 제13조 제3항, 제62조',
+  req:'중앙선을 넘어 반대차로로 진입한 것이 사고의 직접 원인이고, 부득이한 사유가 없을 것',
+  o:['앞지르기하려고 중앙선을 넘어 마주오는 차와 충돌','졸음·전방주시 태만으로 중앙선을 넘은 경우(부득이한 사유로 보지 않음, 대법원 1998. 7. 28. 98도832)','황색 점선 구간에서 추월 후 제때 복귀하지 못해 충돌','고속도로·자동차전용도로에서 횡단·유턴·후진 중 사고'],
+  x:['빙판·빗길에 미끄러져 침범(운전자가 통제할 수 없었던 부득이한 사유)','갑자기 끼어든 차량을 피하려다 불가피하게 침범','중앙선 침범 상태였으나 사고 발생과 무관(예: 침범 후 복귀하여 정상 주행 중 다른 원인으로 사고)','중앙선이 설치되지 않은 이면도로·비포장도로','교차로 내부에서 좌회전 중 발생한 사고(교차로 내에는 중앙선이 없다고 보는 것이 일반적 해석)'],
+  cases:['"부득이한 사유"는 운전자의 과실 없이 외부적 요인으로 침범한 경우에 한정되며, 졸음·과속·전방주시 태만으로 인한 침범은 부득이한 사유가 아니라는 것이 판례 취지','중앙선을 침범한 차가 아니라 침범당한 차와 충돌한 제3자 사고에서도 침범이 직접 원인이면 적용'],
+  ev:['노면 중앙선 종류(실선·점선·복선) 사진','충돌 지점과 중앙선 위치 실측·스키드마크','블랙박스 영상으로 침범 경위(회피·미끄러짐 여부) 확인','기상·노면 상태 기록'] },
+{ id:'speed', no:3, name:'제한속도 20km/h 초과', law:'도로교통법 제17조',
+  req:'사고 당시 속도가 해당 구간 제한속도를 시속 20km 넘게 초과하였고, 그 과속이 사고의 원인',
+  o:['제한 60km/h 도로에서 85km/h로 주행 중 사고','어린이보호구역(제한 30km/h)에서 51km/h 이상으로 주행 중 사고(정확히 20km/h 초과는 "초과"가 아님)'],
+  x:['제한 60km/h 도로에서 75km/h → 15km/h 초과는 범칙금 대상이지만 특례 예외는 아님','과속 중이었으나 정지 후 뒤에서 추돌당한 경우처럼 과속이 사고와 무관','속도를 객관적으로 입증할 자료가 없는 경우(피의자 진술만으로는 부족)'],
+  cases:['속도는 EDR(사고기록장치), 블랙박스 프레임 분석, 스키드마크 길이 계산 등 객관적 자료로 입증해야 하며 입증 책임은 수사기관에 있음'],
+  ev:['해당 구간 제한속도 표지·고시 확인','EDR 데이터 추출(국과수·도로교통공단 의뢰)','블랙박스 영상 프레임 간 거리 분석','스키드마크·요마크 실측'] },
+{ id:'overtake', no:4, name:'앞지르기 방법·금지 위반, 끼어들기 금지 위반', law:'도로교통법 제21조, 제22조, 제23조, 제60조 제2항',
+  req:'앞지르기 방법(좌측 통행), 금지시기(앞차가 앞지르기·좌회전 중 등), 금지장소(교차로·터널·다리·급커브 등) 위반 또는 끼어들기 금지 위반이 사고의 직접 원인',
+  o:['교차로·터널·다리 위·급커브에서 앞지르기 중 사고','앞차의 우측으로 앞지르기 중 사고','앞차가 좌회전하려고 신호를 켠 상태에서 앞지르기','정체 중 끼어들기 금지 장소에서 끼어들기 중 사고'],
+  x:['단순 차로 변경 중 접촉 → 진로변경 방법 위반(안전운전의무)이며 "앞지르기"가 아님','앞지르기를 마치고 정상 주행 중 발생한 사고','앞차가 양보하여 정상적으로 앞지른 뒤 발생한 사고'],
+  cases:['"앞지르기"는 앞차의 옆을 지나 그 앞으로 나가는 행위이므로, 같은 방향 차로를 바꾸는 진로변경과 구별해야 한다는 것이 실무·판례의 기준'],
+  ev:['금지장소 여부(교차로·터널·다리·표지) 확인','블랙박스로 앞지르기 시작·완료 시점 확인','앞차 방향지시등 작동 여부'] },
+{ id:'rail', no:5, name:'철길건널목 통과방법 위반', law:'도로교통법 제24조',
+  req:'건널목 앞 일시정지·안전확인 없이 진입하거나, 차단기·경보기 작동 중 진입',
+  o:['건널목 앞에서 일시정지 없이 진입 중 사고','차단기가 내려가는 중 또는 경보기 작동 중 진입'],
+  x:['건널목 신호기가 통행을 지시하여 일시정지 없이 통과 중 발생한 사고(일시정지 면제)','건널목 통과 후 발생한 사고'],
+  cases:[], ev:['건널목 차단기·경보기 작동 기록(철도운영기관)','블랙박스로 일시정지 여부 확인'] },
+{ id:'cross', no:6, name:'횡단보도 보행자 보호의무 위반', law:'도로교통법 제27조 제1항',
+  req:'횡단보도를 통행하고 있거나 통행하려는 보행자 앞에서 일시정지하지 않은 것이 사고의 직접 원인',
+  o:['신호등 없는 횡단보도를 건너는 보행자 충격','보행자 녹색 신호에 횡단 중인 보행자 충격','녹색 점멸 중 횡단을 시작하여 적색으로 바뀐 뒤 계속 건너는 보행자 충격(대법원 2009. 5. 14. 2007도9598)','횡단보도를 건너려고 서 있는 보행자 앞에서 일시정지하지 않아 발생한 사고(2022년 개정으로 "통행하려고 하는 때" 추가)','자전거·킥보드에서 내려 끌거나 들고 건너는 사람(제27조 제1항이 보행자에 포함)'],
+  x:['자전거·전동킥보드를 탄 채 횡단보도를 건너는 사람 → 보행자가 아니라 차(다른 호·안전운전의무 검토)','보행자 신호가 적색인 상태에서 횡단하는 사람 → "횡단보도를 통행하는 보행자"로 보지 않음(대법원 2017. 3. 15. 2016도17442 취지). 단, 차량 신호위반 여부는 별도 검토','횡단보도 밖(인근)에서 무단횡단하는 보행자','횡단보도를 완전히 벗어난 후 발생한 사고'],
+  cases:['횡단보도 보행자 보호의무는 보행자 신호의 색과 횡단 시작 시점에 따라 결론이 달라지므로 보행 신호 주기와 횡단 시작 시점을 반드시 확정해야 함'],
+  ev:['보행 신호 주기표','횡단보도 표시 범위와 충돌 지점 실측','블랙박스·CCTV로 보행자가 횡단을 시작한 시점의 신호 확인','피해자가 자전거 등을 타고 있었는지 끌고 있었는지'] },
+{ id:'license', no:7, name:'무면허 운전', law:'도로교통법 제43조, 제96조, 건설기계관리법 제26조',
+  req:'면허 없음, 정지·취소 중, 운전 가능 차종 외 운전, 국제운전면허증 미소지',
+  o:['면허 미취득','면허 정지 기간 중 운전(법문이 무면허로 간주)','면허 취소 처분이 효력을 발생한 후 운전','2종 보통 면허로 1종 대형 면허가 필요한 차량 운전(면허 종별 외 운전은 무면허, 대법원 다수 판례)','125cc 초과 이륜차를 2종 소형 면허 없이 운전'],
+  x:['면허증을 소지하지 않았을 뿐 유효한 면허가 있음(미휴대)','취소 처분이 적법하게 통지되기 전이라 효력이 발생하지 않은 상태','보유 면허로 운전 가능한 차종 범위 내 운전'],
+  cases:['면허 취소는 처분 통지가 도달하여 효력이 발생한 때부터 무면허가 되므로 취소 통지 일자를 확인해야 함'],
+  ev:['운전면허 조회(면허 종별·정지·취소 이력·통지일)','차량 등록증으로 차종·배기량 확인','외국인은 국제운전면허증·체류자격 확인'] },
+{ id:'drunk', no:8, name:'음주·약물 운전', law:'도로교통법 제44조 제1항, 제45조',
+  req:'혈중알코올농도 0.03% 이상, 또는 약물 영향으로 정상 운전이 어려운 상태',
+  o:['측정 결과 0.03% 이상','음주 후 시간이 지났으나 위드마크 역추산으로 0.03% 이상 인정','약물(마약·향정·수면제 등) 영향으로 정상 운전이 어려운 상태'],
+  x:['0.03% 미만','위드마크 역추산 결과가 0.03%에 미달하거나 역추산 전제사실(음주량·시각)을 특정할 수 없음','측정에 불응했으나 채혈을 요청·동의하여 채혈한 경우 → 측정거부 단서 아님(채혈 결과로 판단)'],
+  cases:['0.08% 이상이거나 언행·보행이 불안정하면 특가법 제5조의11 위험운전치사상을 함께 검토. 농도 수치만으로 판단하지 않고 사고 경위·운전자 상태를 종합'],
+  ev:['호흡측정 결과지·채혈 감정서','음주 시각·종료 시각·음주량 진술 및 영수증','주취자 정황 보고(언행·보행·냄새)','위드마크 적용 시 전제사실 입증 자료'] },
+{ id:'sidewalk', no:9, name:'보도 침범 · 보도 횡단방법 위반', law:'도로교통법 제13조 제1항·제2항',
+  req:'보도가 설치된 도로에서 보도를 침범하거나, 보도를 횡단하기 직전 일시정지하지 않은 것이 사고의 직접 원인',
+  o:['보도 위를 걷는 보행자를 차로 충격','건물·주차장 출입을 위해 보도를 가로지르면서 직전 일시정지 없이 진행하다 보행자 충격'],
+  x:['보도와 차도의 구분이 없는 도로에서 발생한 사고(보도가 없으므로 침범 불가, 안전운전의무 검토)','길가장자리구역은 보도가 아님','보도 횡단 직전 일시정지 후 서행 진입 중 발생한 사고(의무 이행)'],
+  cases:[], ev:['보도·차도 구분 여부와 경계석 사진','충돌 지점이 보도 위인지 실측','블랙박스로 일시정지 여부 확인'] },
+{ id:'passenger', no:10, name:'승객 추락방지의무 위반', law:'도로교통법 제39조 제3항',
+  req:'승객이 타고 내리는 중 문을 닫지 않고 출발하는 등 추락방지 조치를 하지 않은 것이 사고의 원인',
+  o:['승객이 완전히 하차하기 전 문을 열어둔 채 출발하여 추락','버스 뒷문이 열린 상태로 출발하여 승객 추락'],
+  x:['승객이 하차를 마치고 문이 닫힌 뒤 보행 중 발생한 사고','차 밖에 있는 제3자(승객 아님)의 사고'],
+  cases:[], ev:['차량 문 개폐 기록·블랙박스 실내 영상','승객 승하차 시점 확인'] },
+{ id:'child', no:11, name:'어린이보호구역 어린이 상해', law:'도로교통법 제12조 제3항',
+  req:'어린이보호구역에서 제한속도 준수·안전 유의 의무를 위반하여 13세 미만 어린이에게 상해',
+  o:['보호구역 내 제한속도 초과 또는 전방주시 태만으로 어린이 충격','보호구역 내 불법 주정차 차량 사이에서 나오는 어린이를 서행·주의하지 않아 충격'],
+  x:['피해자가 13세 이상(중학생 이상)인 경우 → 제11호 아님, 다른 호 검토','보호구역 지정 범위 밖에서 발생한 사고','운전자가 제한속도를 지키고 주의의무를 다했음에도 회피가 불가능했던 경우(과실 자체 부정)'],
+  cases:['치사상에 이르면 특가법 제5조의13(어린이보호구역 치사상)이 적용되어 가중처벌. 어린이 연령은 사고 당일 기준 13세 미만인지 확인'],
+  ev:['어린이보호구역 지정 고시·표지·노면표시 확인','피해 어린이 생년월일','속도 입증 자료(EDR·블랙박스)','사고 지점 시야 확보 상태(주정차 차량 등)'] },
+{ id:'cargo', no:12, name:'화물 추락방지 조치 위반', law:'도로교통법 제39조 제4항',
+  req:'화물이 떨어지지 않도록 덮개·결속 등 조치를 하지 않은 상태로 운전하여 화물 낙하로 사고',
+  o:['적재물을 결속하지 않아 주행 중 낙하한 화물에 뒤따르던 차가 충돌·전도','덮개 없이 적재한 자갈·철판 등이 떨어져 발생한 사고'],
+  x:['결속·덮개 조치를 하였는데 다른 차의 충격으로 화물이 떨어진 경우(조치의무 이행)','화물이 아닌 차량 부품의 탈락'],
+  cases:[], ev:['적재 상태·결속 장비 사진','낙하물과 사고 차량의 충돌 흔적','화물 고정 조치 여부 진술·영상'] }
+];
+
+// ───────────────────────── UI 구성 ─────────────────────────
+const state = {};
+function $(s){ return document.querySelector(s); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function oxHtml(it){
+  return `<div class="ox">
+    <div class="o"><h4>해당 O (공소권 있음)</h4><ul>${it.o.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+    <div class="x"><h4>해당 X (특례 판단으로)</h4><ul>${it.x.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+  </div>
+  ${it.cases.length?`<div class="cases"><h4>판단 기준·판례 취지</h4><ul>${it.cases.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
+  <div class="cases"><h4>확보할 자료</h4><ul>${it.ev.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;
+}
+
+function renderItems(){
+  $('#items').innerHTML = ITEMS.map(it=>`
+  <div class="item" id="item-${it.id}">
+    <div class="item-head"><div class="no">${it.no}</div><div class="nm">${esc(it.name)}<small>${esc(it.law)}</small></div></div>
+    <div class="tri">
+      <button class="y" data-id="${it.id}" data-v="y">해당</button>
+      <button class="u" data-id="${it.id}" data-v="u">쟁점</button>
+      <button class="n on" data-id="${it.id}" data-v="n">비해당</button>
+    </div>
+    <button class="toggle" data-t="${it.id}">쟁점 보기 ▾</button>
+    <div class="detail" id="det-${it.id}"><p style="margin-bottom:6px"><b>요건</b> ${esc(it.req)}</p>${oxHtml(it)}</div>
+  </div>`).join('');
+  ITEMS.forEach(it=>state[it.id]='n');
+  document.querySelectorAll('.tri button').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.id; state[id]=b.dataset.v;
+    b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    if(b.dataset.v!=='n') $('#det-'+id).classList.add('open');
+  }));
+  document.querySelectorAll('.toggle').forEach(b=>b.addEventListener('click',()=>{
+    const d=$('#det-'+b.dataset.t); d.classList.toggle('open');
+    b.textContent = d.classList.contains('open')?'쟁점 닫기 ▴':'쟁점 보기 ▾';
+  }));
+}
+
+function renderCompare(){
+  $('#compare-list').innerHTML = ITEMS.map(it=>`
+    <div class="card"><div class="step-no">제3조 제2항 단서 제${it.no}호 · ${esc(it.law)}</div><h2>${esc(it.name)}</h2>
+    <div class="hint"><b>요건</b> ${esc(it.req)}</div>${oxHtml(it)}</div>`).join('');
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===t.dataset.p));
+  window.scrollTo(0,0);
+}));
+
+document.addEventListener('change',e=>{
+  if(e.target.matches('input[type=radio]')){
+    document.querySelectorAll(`input[name=${e.target.name}]`).forEach(r=>r.closest('.opt').classList.toggle('sel',r.checked));
+  }
+  if(e.target.matches('input[type=checkbox]')) e.target.closest('.opt').classList.toggle('sel',e.target.checked);
+  if(e.target.name==='result') applyResultMode();
+});
+
+function applyResultMode(){
+  const r=val('result');
+  const hide = r==='death'||r==='property';
+  $('#card-12').classList.toggle('hidden', r==='property');
+  $('#card-victim').classList.toggle('hidden', hide);
+  if(r==='death') $('#card-12 .hint').innerHTML='사망사고는 12대 중과실 여부와 무관하게 공소권이 있습니다. 다만 과실 입증과 양형, 특가법 적용 판단을 위해 해당 여부를 표시해 두면 결과에 반영됩니다.';
+  else $('#card-12 .hint').innerHTML='각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. "쟁점 보기"에서 경계 사례와 판례를 확인할 수 있습니다.';
+}
+function val(n){ const r=document.querySelector(`input[name=${n}]:checked`); return r?r.value:null; }
+
+// ───────────────────────── 판단 로직 ─────────────────────────
+function judge(){
+  const result=val('result');
+  if(!result){ return {cls:'yellow', verdict:'사고 결과를 먼저 선택하세요', basis:'', lines:[], explain:''}; }
+  const flee=$('#f-flee').checked, refuse=$('#f-refuse').checked;
+  const hit=ITEMS.filter(i=>state[i.id]==='y'), unc=ITEMS.filter(i=>state[i.id]==='u');
+  const has=id=>state[id]==='y';
+  const lines=[], tags=[], todo=[]; let cls, verdict, basis, explain;
+
+  const addExtra=()=>{
+    if(has('drunk')) tags.push(['r','도로교통법 제148조의2 음주운전 별도 성립']);
+    if(refuse) tags.push(['r','도로교통법 제148조의2 측정거부 별도 성립']);
+    if(has('license')) tags.push(['r','도로교통법 제152조 무면허운전 별도 성립']);
+    if(has('child') && result!=='property') tags.push(['r','특가법 제5조의13 어린이보호구역 치사상 검토']);
+    if(has('drunk') && result!=='property') tags.push(['y','특가법 제5조의11 위험운전치사상 검토(정상 운전 곤란 상태 여부)']);
+  };
+
+  if(result==='death'){
+    cls='red'; verdict='공소권 있음 (업무상과실치사)';
+    basis='교통사고처리특례법 제3조 제1항 · 형법 제268조. 치사죄는 반의사불벌·보험특례 대상이 아니므로 합의나 종합보험과 무관하게 기소 대상입니다.';
+    if(flee) tags.push(['r','특가법 제5조의3 제1항 제1호 도주치사(무기 또는 5년 이상)']);
+    addExtra();
+    if(hit.length) lines.push('12대 중과실 해당: '+hit.map(i=>`제${i.no}호 ${i.name}`).join(', ')+' → 과실 입증·양형 자료');
+    if(unc.length) lines.push('쟁점 항목: '+unc.map(i=>`제${i.no}호 ${i.name}`).join(', ')+' → 과실 판단에 영향, 자료 보강 필요');
+    todo.push('운전자 과실과 사망 사이 인과관계 입증(부검·진단서·사고재구성)','합의 여부는 양형 자료로만 기록');
+    explain='사망사고는 피해자 유족과 합의하거나 종합보험에 가입되어 있어도 형사처벌 대상입니다. 교통사고처리특례법의 처벌 특례는 상해와 물적 피해에만 적용되기 때문입니다. 합의는 처벌 수위를 정할 때 참작됩니다.';
+  }
+  else if(result==='property'){
+    if(flee){
+      cls='red'; verdict='공소권 있음 (사고 후 미조치)';
+      basis='도로교통법 제148조(제54조 제1항 조치 불이행, 5년 이하 징역 또는 1,500만원 이하 벌금). 재물손괴(제151조) 자체는 반의사불벌·보험특례가 적용되지만, 미조치는 별도 범죄입니다.';
+      lines.push('주·정차된 차만 손괴한 것이 분명하고 인적사항만 제공하지 않은 경우는 제148조가 아니라 제156조 제10호 범칙금 대상(20만원 이하 벌금·구류·과료)','인적 피해가 없으므로 특가법 제5조의3(도주차량)은 적용되지 않음');
+      addExtra();
+      explain='물적 피해만 있는 사고라도 피해자 확인이나 조치를 하지 않고 현장을 떠나면 "사고 후 미조치"로 형사처벌 대상이 됩니다. 단, 주차된 차만 긁고 연락처를 남기지 않은 경우는 범칙금 사안입니다.';
+    } else {
+      cls='green'; verdict='원칙적으로 공소권 없음 (반의사불벌 · 보험특례)';
+      basis='교통사고처리특례법 제3조 제2항 본문, 제4조 제1항 · 도로교통법 제151조. 12대 중과실 단서는 "치상죄"에만 적용되므로 물적 피해 사고에는 적용되지 않습니다.';
+      lines.push('피해자가 처벌을 원하지 않거나 대물배상 보험(공제)에 가입되어 있으면 공소권 없음','처벌을 원하고 보험도 없으면 업무상과실 재물손괴로 입건(2년 이하 금고 또는 500만원 이하 벌금)');
+      if(hit.length) lines.push('선택한 중과실 항목('+hit.map(i=>`제${i.no}호`).join(', ')+')은 공소권에 영향 없음. 해당 도로교통법 위반은 범칙금·과태료·벌점으로 별도 처리');
+      addExtra();
+      todo.push('대물배상 보험 가입 서면 확인','피해자 처벌의사 확인');
+      explain='물적 피해만 있는 사고는 신호위반 같은 중과실이 있어도 피해자와 합의하거나 보험이 있으면 형사처벌 대상이 아닙니다. 중과실로 처벌 대상이 되는 것은 사람이 다친 경우에 한합니다. 다만 신호위반 등 법규 위반 자체는 범칙금과 벌점으로 처리됩니다.';
+    }
+  }
+  else { // injury
+    const sev=val('sev'), will=val('will'), ins=val('ins');
+    const proviso=[];
+    if(flee) proviso.push('구호조치 없이 도주(제3조 제2항 단서 전단)');
+    if(refuse) proviso.push('음주측정 불응(제3조 제2항 단서)');
+    hit.forEach(i=>proviso.push(`제${i.no}호 ${i.name}`));
+    if(proviso.length){
+      cls='red'; verdict='공소권 있음 (특례 적용 제외)';
+      basis='교통사고처리특례법 제3조 제2항 단서, 제4조 제1항 제1호. 피해자의 처벌불원 의사나 종합보험 가입과 관계없이 업무상과실치상으로 기소 대상입니다.';
+      lines.push('적용 단서: '+proviso.join(' / '));
+      if(flee) tags.push(['r','특가법 제5조의3 제1항 제2호 도주치상(1년 이상 유기징역 또는 500만~3,000만원 벌금)']);
+      addExtra();
+      if(unc.length) lines.push('추가 쟁점 항목: '+unc.map(i=>`제${i.no}호 ${i.name}`).join(', ')+' → 해당 여부가 양형·죄명에 영향');
+      if(will==='no') lines.push('처벌불원 의사(합의)는 공소권에 영향 없음, 양형 자료로 기록');
+      if(ins==='full') lines.push('종합보험 가입도 공소권에 영향 없음(제4조 제1항 제1호)');
+      hit.forEach(i=>i.ev.forEach(e=>todo.push(`[제${i.no}호] ${e}`)));
+      if(flee) todo.push('도주 판단 근거: 피해자 구호 필요성 인식 여부, 현장 이탈 경위, 연락처 제공 여부');
+      explain=`이 사고는 ${proviso.join(', ')}에 해당합니다. 교통사고처리특례법은 사람이 다친 사고에서 이 사유가 있으면 피해자와 합의하거나 종합보험에 가입되어 있어도 형사처벌 대상으로 정하고 있습니다. 합의는 처벌 수위를 정할 때 참작됩니다.`;
+    }
+    else if(unc.length){
+      cls='yellow'; verdict='쟁점 판단에 따라 결론이 갈림';
+      basis='쟁점 항목이 "해당"으로 판단되면 공소권 있음, "비해당"이면 아래 특례 판단으로 넘어갑니다.';
+      lines.push('쟁점 항목: '+unc.map(i=>`제${i.no}호 ${i.name}`).join(', '));
+      unc.forEach(i=>{ lines.push(`[제${i.no}호 요건] ${i.req}`); i.cases.forEach(c=>lines.push(`[제${i.no}호 기준] ${c}`)); });
+      unc.forEach(i=>i.ev.forEach(e=>todo.push(`[제${i.no}호] ${e}`)));
+      const sub=specialJudge(sev,will,ins);
+      lines.push('비해당으로 판단될 경우: '+sub.verdict+' ('+sub.short+')');
+      explain=`${unc.map(i=>i.name).join(', ')} 해당 여부가 확정되어야 형사처벌 대상인지 판단할 수 있습니다. 위 "확보할 자료"를 갖춘 뒤 다시 판단하세요. 민원인에게는 "현재 ○○ 해당 여부를 확인 중이며, 해당하면 합의와 무관하게 처벌 대상, 해당하지 않으면 합의·보험 여부에 따라 결정된다"고 설명할 수 있습니다.`;
+    }
+    else {
+      const sub=specialJudge(sev,will,ins);
+      cls=sub.cls; verdict=sub.verdict; basis=sub.basis; lines.push(...sub.lines); todo.push(...sub.todo); explain=sub.explain;
+    }
+  }
+  return {cls,verdict,basis,lines,tags,todo,explain};
+}
+
+function specialJudge(sev,will,ins){
+  const lines=[], todo=[];
+  if(!sev||!will||!ins){
+    const miss=[!sev&&'피해 정도',!will&&'피해자 처벌의사',!ins&&'보험 가입 여부'].filter(Boolean);
+    return {cls:'yellow', verdict:'추가 확인 필요', short:'미입력 항목 있음', basis:'12대 중과실·도주·측정거부에 해당하지 않으므로 공소권은 처벌의사·보험·중상해 여부로 결정됩니다.', lines:['미확인 항목: '+miss.join(', ')], todo:['보험회사 작성 가입사실증명 서면 확보(제4조 제3항)','피해자 처벌의사 확인서·합의서','진단서·의무기록으로 중상해 여부 확인'], explain:'중과실 사유가 없으므로 피해자와의 합의 여부, 종합보험 가입 여부, 피해 정도에 따라 처벌 대상인지 정해집니다. 확인이 끝나면 결론을 안내하겠다고 설명할 수 있습니다.'};
+  }
+  if(will==='no'){
+    return {cls:'green', verdict:'공소권 없음 (처벌불원)', short:'반의사불벌', basis:'교통사고처리특례법 제3조 제2항 본문. 피해자의 명시적 의사에 반하여 공소를 제기할 수 없습니다. 중상해 여부와 무관합니다.',
+      lines:['처벌불원 의사는 1심 판결 선고 전까지 유효하며 철회 불가(형사소송법 제232조 제3항)','피해자가 미성년자라도 의사능력이 있으면 스스로 처벌불원 의사 표시 가능(대법원 2009도6058 전원합의체)', sev==='serious'?'중상해 사건이라도 반의사불벌은 적용됨(보험특례만 제외)':''].filter(Boolean),
+      todo:['처벌불원 의사가 명시된 합의서·진술조서 첨부','처벌불원 의사가 피해자 본인(또는 적법한 대리인)의 것인지 확인'],
+      explain:'이 사고는 중과실 사유가 없고 피해자가 처벌을 원하지 않으므로 형사처벌 대상이 아닙니다. 다만 도로교통법 위반(안전운전의무 위반 등)에 대한 범칙금·벌점은 별도로 부과될 수 있습니다.'};
+  }
+  if(ins==='full'){
+    if(sev==='serious'){
+      return {cls:'red', verdict:'공소권 있음 (중상해 · 보험특례 제외)', short:'제4조 제1항 제2호', basis:'교통사고처리특례법 제4조 제1항 제2호. 피해자가 생명의 위험·불구·불치나 난치의 질병에 이른 경우 종합보험에 가입되어 있어도 보험특례가 적용되지 않습니다. 반의사불벌은 적용되므로 합의하면 공소권 없음으로 전환됩니다.',
+        lines:['중상해 판단은 치료 경과에 따라 달라지므로 의무기록·전문의 소견으로 확정','중상해에 해당하지 않는 것으로 확정되면 보험특례 적용 → 공소권 없음', will==='unknown'?'피해자 처벌의사 미확인: 처벌불원 의사가 확인되면 공소권 없음':''].filter(Boolean),
+        todo:['진단서·의무기록·후유장해 소견 확보','검찰 중상해 처리기준 대조','피해자 처벌의사 확인'],
+        explain:'종합보험이 있어도 피해자가 생명에 위험이 있거나 불구·난치 상태에 이른 "중상해"인 경우에는 보험특례가 적용되지 않습니다(2009년 헌법재판소 결정 반영). 피해자가 처벌을 원하지 않으면 처벌 대상에서 제외됩니다.'};
+    }
+    return {cls:'green', verdict:'공소권 없음 (종합보험 특례)', short:'제4조 제1항', basis:'교통사고처리특례법 제4조 제1항. 가해 차량이 종합보험·공제에 가입되어 있고 중과실 사유가 없으므로 공소를 제기할 수 없습니다.',
+      lines:['보험 가입 사실은 보험회사 작성 서면으로 증명(제4조 제3항)','운전자 한정 특약 위반·보험료 미납 해지 등 면책사유가 확인되면 결론이 바뀜(제4조 제1항 제3호)','치료 중 중상해로 악화되면 보험특례 제외로 전환될 수 있음'],
+      todo:['보험 가입사실증명 서면 첨부','운전자가 보험약관상 피보험자 범위에 포함되는지 확인','진단서로 중상해 아님 확인'],
+      explain:'이 사고는 신호위반 등 중과실 사유가 없고 가해 차량이 종합보험에 가입되어 있어 형사처벌 대상이 아닙니다. 피해자가 처벌을 원하더라도 법률상 공소를 제기할 수 없습니다. 민사상 손해배상은 보험회사를 통해 진행되며, 도로교통법 위반 범칙금·벌점은 별도입니다.'};
+  }
+  // 책임보험만 / 미가입 / 면책 / 미확인
+  if(ins==='unknown'){
+    return {cls:'yellow', verdict:'보험 확인 후 결정', short:'보험 미확인', basis:'중과실 사유가 없으므로 종합보험 가입 여부(서면)에 따라 공소권이 결정됩니다.',
+      lines:[sev==='serious'?'중상해 의심: 종합보험이 있어도 공소권 있음(제4조 제1항 제2호), 합의 시 공소권 없음':'종합보험 확인 시 공소권 없음, 미가입 시 공소권 있음(합의 시 공소권 없음)'],
+      todo:['보험회사 작성 가입사실증명 서면 확보','운전자 한정 특약·면책사유 확인'],
+      explain:'중과실 사유가 없으므로 가해 차량의 종합보험 가입 여부에 따라 처벌 대상인지 정해집니다. 보험 확인 뒤 안내하겠다고 설명할 수 있습니다.'};
+  }
+  const why = ins==='none'?'책임보험만 가입 또는 미가입':'보험계약 무효·해지·면책으로 보험금 지급의무 없음(제4조 제1항 제3호)';
+  return {cls:'red', verdict:'공소권 있음 (업무상과실치상)', short:'특례 요건 미충족', basis:`교통사고처리특례법 제3조 제1항 · 형법 제268조. ${why}이므로 보험특례가 적용되지 않고, 피해자가 처벌불원 의사를 표시하지 않았습니다.`,
+    lines:['피해자가 처벌불원 의사를 표시하면 공소권 없음으로 전환(1심 판결 전까지)', will==='unknown'?'피해자 처벌의사 미확인: 확인 결과에 따라 결론이 바뀜':'', sev==='serious'?'중상해 의심: 중상해가 확정되면 사후에 종합보험이 확인되어도 보험특례 제외':''].filter(Boolean),
+    todo:['보험 미가입·면책 사유 서면 확보','피해자 처벌의사 확인 및 합의 진행 상황 기록','진단서 확보'],
+    explain:'이 사고는 중과실 사유는 없지만 가해 차량이 종합보험에 가입되어 있지 않아(또는 보험이 적용되지 않아) 피해자와 합의하지 않으면 형사처벌 대상입니다. 피해자가 처벌을 원하지 않는다는 의사를 표시하면 처벌 대상에서 제외됩니다.'};
+}
+
+function render(){
+  const r=judge();
+  const lines=(r.lines||[]).filter(Boolean);
+  let html=`<div class="result ${r.cls}">
+    <div class="verdict">${esc(r.verdict)}</div>
+    <div class="basis">${esc(r.basis||'')}</div>
+    ${(r.tags||[]).length?`<div>${r.tags.map(t=>`<span class="tag ${t[0]}">${esc(t[1])}</span>`).join('')}</div>`:''}
+    ${lines.length?`<h3>판단 근거·유의사항</h3><ul>${lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
+    ${(r.todo||[]).length?`<h3>확보·확인할 자료</h3><ul>${r.todo.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
+    ${r.explain?`<h3>민원인·당사자 설명 문구</h3><div class="explain">${esc(r.explain)}</div>`:''}
+    ${r.basis?`<button class="btn sec" id="copy">결과 요약 복사 (개인정보 없음)</button>`:''}
+  </div>`;
+  $('#out').innerHTML=html;
+  const c=$('#copy'); if(c) c.addEventListener('click',()=>{
+    const txt=['[교통사고 공소권 판단 요약]','결론: '+r.verdict,'근거: '+r.basis, ...(r.tags||[]).map(t=>'- '+t[1]), ...lines.map(l=>'- '+l), r.todo&&r.todo.length?'확보 자료:':'' , ...(r.todo||[]).map(l=>'  · '+l), '설명 문구: '+r.explain, '※ 참고용 자동 판단, 담당자 검토 필요'].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(txt).then(()=>{c.textContent='복사됨 ✓'; setTimeout(()=>c.textContent='결과 요약 복사 (개인정보 없음)',1500);}).catch(()=>{ alert(txt); });
+  });
+  $('#out').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+renderItems(); renderCompare();
+$('#run').addEventListener('click',render);
+</script>
+</body>
+</html>
