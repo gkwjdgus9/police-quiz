@@ -375,9 +375,12 @@ const ITEMS = [
 
 // ───────────────────────── 최신성 · 원문 링크 ─────────────────────────
 const CONTENT_DATE = '2026-10-17'; // 이 페이지의 법령·판례 요약을 작성한 기준일
+const OFFLINE = !!window.__OFFLINE__;          // 내부망·오프라인판: 외부 링크를 만들지 않음
+const LAW_DATA = window.__LAW_DATA__ || null;  // 내장된 현행 조문 데이터(빌드 시 주입)
 const LAW_URL = (law, art) => `https://www.law.go.kr/법령/${law}/${art}`;
 function linkify(t){
   // 판례·결정 번호를 원문 검색 링크로 바꿈 (casenote.kr 사건번호 경로)
+  if(OFFLINE) return t;
   return t.replace(/(\d{2,4})(도|헌마|헌바|헌가|다|두|노|고단|고합)(\d+)/g, (m,y,k,n)=>{
     const court = k.startsWith('헌')?'헌법재판소':'대법원';
     return `<a href="https://casenote.kr/${court}/${m}" target="_blank" rel="noopener" title="원문 확인">${m}</a>`;
@@ -388,6 +391,7 @@ function firstArticle(lawStr){
   return m ? {law:m[1], art:m[2]} : null;
 }
 function sourcesHtml(it){
+  if(OFFLINE) return '';
   const a = firstArticle(it.law);
   const links = [`<a href="${LAW_URL('교통사고처리특례법','제3조')}" target="_blank" rel="noopener">교특법 제3조 원문</a>`];
   if(a) links.push(`<a href="${LAW_URL(a.law,a.art)}" target="_blank" rel="noopener">${a.law} ${a.art} 원문</a>`);
@@ -609,7 +613,7 @@ $('#run').addEventListener('click',render);
 
 // ───────────────────────── 법령 요지 탭 판례 번호 링크 + 기준일 표시 ─────────────────────────
 document.querySelectorAll('#law .art p, #law .art li').forEach(el=>{ el.innerHTML = linkify(el.innerHTML); });
-$('#basis-date').textContent = '요약 작성 기준일 ' + CONTENT_DATE.replace(/-/g,'. ') + '.';
+$('#basis-date').textContent = '요약 작성 기준일 ' + CONTENT_DATE.replace(/-/g,'. ') + '.' + (OFFLINE ? ' · 내부망·오프라인판' : '');
 
 // ───────────────────────── 키워드 검색 ─────────────────────────
 const INDEX = [];
@@ -620,12 +624,14 @@ ITEMS.forEach(it=>{
   it.cases.forEach(t=>add('판단 기준', t)); it.ev.forEach(t=>add('확보 자료', t));
 });
 document.querySelectorAll('#law .art').forEach(art=>{
-  const title = art.querySelector('h3')?.textContent || '법령 요지';
+  const h3 = art.querySelector('h3'); const title = h3 ? h3.textContent : '법령 요지';
   art.querySelectorAll('p, li').forEach(el=>INDEX.push({kind:'law', el:art, label:title, text:el.textContent}));
 });
+// 띄어쓰기 차이("면허정지" / "면허 정지")를 무시하고 찾기 위해 글자 사이에 공백을 허용하는 정규식을 만듦
+function termRe(t){ return new RegExp(t.split('').map(ch=>ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'gi'); }
 function hl(text, terms){
   let h = esc(text);
-  terms.forEach(t=>{ const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); h=h.replace(re, m=>`<mark>${m}</mark>`); });
+  terms.forEach(t=>{ h=h.replace(termRe(t), m=>`<mark>${m}</mark>`); });
   return h;
 }
 function doSearch(){
@@ -633,7 +639,7 @@ function doSearch(){
   $('#q-clear').hidden = !q;
   if(!q){ box.hidden=true; box.innerHTML=''; document.querySelectorAll('.panel').forEach(p=>p.hidden=false); $('#outdated').hidden=!$('#outdated').innerHTML; return; }
   const terms=q.split(/\s+/).filter(Boolean);
-  const hits=INDEX.filter(e=>terms.every(t=>e.text.toLowerCase().includes(t.toLowerCase()))).slice(0,40);
+  const hits=INDEX.filter(e=>terms.every(t=>termRe(t).test(e.text))).slice(0,40);
   document.querySelectorAll('.panel').forEach(p=>p.hidden=true); $('#outdated').hidden=true;
   box.hidden=false;
   if(!hits.length){ box.innerHTML=`<div class="sr-head">"${esc(q)}"에 해당하는 내용이 없습니다. 다른 표현으로 검색해 보세요 (예: 점멸, 끌고, 정지기간, 책임보험).</div>`; return; }
@@ -664,21 +670,22 @@ $('#q-clear').addEventListener('click',()=>{ $('#q').value=''; doSearch(); $('#q
 // ───────────────────────── 현행 법령 자동 확인 (law-data.json) ─────────────────────────
 (async function lawSync(){
   const box=$('#lawsync');
-  const links=`<p style="margin-top:6px">원문: <a href="${LAW_URL('교통사고처리특례법','제3조')}" target="_blank" rel="noopener">교특법 제3조</a> · <a href="${LAW_URL('교통사고처리특례법','제4조')}" target="_blank" rel="noopener">제4조</a> · <a href="https://www.law.go.kr/법령/특정범죄가중처벌등에관한법률" target="_blank" rel="noopener">특가법</a> · <a href="https://www.law.go.kr/법령/도로교통법" target="_blank" rel="noopener">도로교통법</a></p>`;
+  const links=OFFLINE?'':`<p style="margin-top:6px">원문: <a href="${LAW_URL('교통사고처리특례법','제3조')}" target="_blank" rel="noopener">교특법 제3조</a> · <a href="${LAW_URL('교통사고처리특례법','제4조')}" target="_blank" rel="noopener">제4조</a> · <a href="https://www.law.go.kr/법령/특정범죄가중처벌등에관한법률" target="_blank" rel="noopener">특가법</a> · <a href="https://www.law.go.kr/법령/도로교통법" target="_blank" rel="noopener">도로교통법</a></p>`;
   try{
-    const r=await fetch('law-data.json',{cache:'no-store'}); if(!r.ok) throw new Error(r.status);
-    const d=await r.json();
+    let d=LAW_DATA;
+    if(!d){ const r=await fetch('law-data.json',{cache:'no-store'}); if(!r.ok) throw new Error(r.status); d=await r.json(); }
     const fmt=s=>s&&s.length===8?`${s.slice(0,4)}. ${s.slice(4,6)}. ${s.slice(6)}.`:(s||'-');
     const newer=(d.laws||[]).filter(l=>l.effective && l.effective.replace(/\./g,'') > CONTENT_DATE.replace(/-/g,''));
     box.className='lawsync '+(newer.length?'warn':'ok');
-    box.innerHTML=`<h3>현행 법령 자동 확인</h3><p>국가법령정보센터 확인일 ${esc((d.fetchedAt||'').slice(0,10))} · 이 페이지 요약 기준일 ${CONTENT_DATE}</p>
+    const srcLine = d.seed ? `내장 조문(임시 전사본, 검수 필요) 기준일 ${esc((d.fetchedAt||'').slice(0,10))}` : `국가법령정보센터 확인일 ${esc((d.fetchedAt||'').slice(0,10))}`;
+    box.innerHTML=`<h3>${LAW_DATA?'내장 현행 조문':'현행 법령 자동 확인'}</h3><p>${srcLine} · 이 페이지 요약 기준일 ${CONTENT_DATE}</p>${d.note?`<p style="margin-top:4px;color:var(--yellow);font-weight:700">${esc(d.note)}</p>`:''}
       <ul style="padding-left:16px;margin-top:4px">${(d.laws||[]).map(l=>`<li><b>${esc(l.name)}</b> 시행 ${esc(fmt(l.effective))} · 공포 ${esc(fmt(l.promulgated))} ${l.number?`(${esc(String(l.number))}호)`:''}</li>`).join('')}</ul>
       ${newer.length?`<p style="margin-top:6px;font-weight:700">요약 기준일 이후 시행된 개정이 있습니다. 아래 조문 원문과 이 페이지의 요약이 다른지 확인하세요.</p>`:`<p style="margin-top:6px">요약 기준일 이후 시행된 개정은 확인되지 않았습니다.</p>`}
       ${(d.laws||[]).map(l=>(l.articles||[]).map(a=>`<details><summary>${esc(l.name)} ${esc(a.no)} ${esc(a.title||'')} 현행 조문</summary><pre>${esc(a.text||'')}</pre></details>`).join('')).join('')}${links}`;
     if(newer.length){ const ob=$('#outdated'); ob.hidden=false; ob.innerHTML=`요약 기준일(${CONTENT_DATE}) 이후 시행된 법령 개정이 확인되었습니다: ${newer.map(l=>esc(l.name)+' '+esc(fmt(l.effective))).join(', ')}. "법령 요지" 탭에서 현행 조문을 확인하세요.`; }
   }catch(e){
     box.className='lawsync';
-    box.innerHTML=`<h3>현행 법령 자동 확인</h3><p>자동 확인 데이터(law-data.json)가 없습니다. 이 페이지의 요약은 ${CONTENT_DATE} 기준이며, 아래 링크에서 현행 조문을 직접 확인할 수 있습니다. 저장소에 국가법령정보센터 API 키를 설정하면 매일 자동으로 갱신됩니다.</p>${links}`;
+    box.innerHTML=OFFLINE?`<h3>현행 법령 확인</h3><p>이 판은 외부 연결 없이 동작합니다. 요약은 ${CONTENT_DATE} 기준이며, 현행 조문은 국가법령정보센터(외부망)에서 확인하십시오.</p>`:`<h3>현행 법령 자동 확인</h3><p>자동 확인 데이터(law-data.json)가 없습니다. 이 페이지의 요약은 ${CONTENT_DATE} 기준이며, 아래 링크에서 현행 조문을 직접 확인할 수 있습니다. 저장소에 국가법령정보센터 API 키를 설정하면 매일 자동으로 갱신됩니다.</p>${links}`;
   }
 })();
 </script>

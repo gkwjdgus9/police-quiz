@@ -1,0 +1,24 @@
+{
+  "name": "교통사고 공소권 판단 도구",
+  "short_name": "공소권 판단",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a5f",
+  "description": "교통사고처리특례법 제3조·제4조 기준 형사처벌 대상 여부 체크리스트 (내부망·오프라인판)",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
