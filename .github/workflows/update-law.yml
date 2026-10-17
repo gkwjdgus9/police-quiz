@@ -1,0 +1,34 @@
+name: 현행 법령 자동 갱신
+
+# 매일 한국시간 06:10에 국가법령정보센터 API로 교특법·특가법·도로교통법 조문을 받아
+# law-data.json을 갱신합니다. 저장소 Settings > Secrets > Actions 에 LAW_OC 를 등록해야 동작합니다.
+on:
+  schedule:
+    - cron: '10 21 * * *'   # 21:10 UTC = 06:10 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 조문 가져오기
+        env:
+          LAW_OC: ${{ secrets.LAW_OC }}
+        run: node scripts/fetch-law.mjs
+      - name: 변경 시 커밋
+        run: |
+          if git diff --quiet -- law-data.json && [ -n "$(git ls-files law-data.json)" ]; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add law-data.json
+          git commit -m "law-data.json 갱신 ($(date -u +%Y-%m-%d))"
+          git push

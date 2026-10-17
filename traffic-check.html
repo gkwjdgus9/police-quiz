@@ -7,24 +7,81 @@
 <title>교통사고 공소권 판단 도구</title>
 <meta name="description" content="교통사고처리특례법 제3조·제4조에 따른 형사처벌(공소권) 판단 체크리스트. 개인정보 입력 없음, 저장·전송 없음.">
 <style>
+/* 레이아웃: 상단 고정 헤더(제목·검색·탭) + 단일 열 카드 흐름, 결과는 색 띠(빨강/노랑/초록)로 상태 표시 */
 :root {
-  --bg: #ffffff; --bg2: #f8fafc; --card: #ffffff; --card2: #f1f5f9;
+  --bg: #ffffff; --bg2: #f8fafc; --card: #ffffff; --card2: #f1f5f9; --surface: #ffffff;
   --border: #e2e8f0; --accent: #3b82f6; --accent2: #2563eb;
   --green: #16a34a; --red: #dc2626; --yellow: #d97706;
   --text: #0f172a; --text2: #475569; --text3: #94a3b8;
   --red-bg: #fef2f2; --green-bg: #f0fdf4; --yellow-bg: #fffbeb; --blue-bg: #eff6ff;
+  --red-line: #fecaca; --green-line: #bbf7d0; --yellow-line: #fde68a; --blue-line: #bfdbfe;
+  --red-chip: #fee2e2; --green-chip: #dcfce7; --yellow-chip: #fef3c7; --blue-chip: #dbeafe;
+  --notice-text: #1e40af; --mark: #fde68a; --head1: #1e3a5f; --head2: #3b82f6; --head-sub: #dbeafe;
 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1220; --bg2: #0b1220; --card: #141d30; --card2: #1b2740; --surface: #0f172a;
+  --border: #2b3a55; --accent: #60a5fa; --accent2: #93c5fd;
+  --green: #4ade80; --red: #f87171; --yellow: #fbbf24;
+  --text: #e6ebf5; --text2: #aab6cc; --text3: #6f7d99;
+  --red-bg: #2a1619; --green-bg: #0f2a1c; --yellow-bg: #2a2109; --blue-bg: #122139;
+  --red-line: #5a2a2f; --green-line: #1f4d33; --yellow-line: #5a4a12; --blue-line: #2b4a7a;
+  --red-chip: #4a1d23; --green-chip: #16402a; --yellow-chip: #4a3a0f; --blue-chip: #1e3a5f;
+  --notice-text: #bfdbfe; --mark: #7a5c0a; --head1: #0f2340; --head2: #1d4ed8; --head-sub: #bfdbfe;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0b1220; --bg2: #0b1220; --card: #141d30; --card2: #1b2740; --surface: #0f172a;
+  --border: #2b3a55; --accent: #60a5fa; --accent2: #93c5fd;
+  --green: #4ade80; --red: #f87171; --yellow: #fbbf24;
+  --text: #e6ebf5; --text2: #aab6cc; --text3: #6f7d99;
+  --red-bg: #2a1619; --green-bg: #0f2a1c; --yellow-bg: #2a2109; --blue-bg: #122139;
+  --red-line: #5a2a2f; --green-line: #1f4d33; --yellow-line: #5a4a12; --blue-line: #2b4a7a;
+  --red-chip: #4a1d23; --green-chip: #16402a; --yellow-chip: #4a3a0f; --blue-chip: #1e3a5f;
+  --notice-text: #bfdbfe; --mark: #7a5c0a; --head1: #0f2340; --head2: #1d4ed8; --head-sub: #bfdbfe;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg2); color: var(--text); font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; line-height: 1.55; }
-header { background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%); color: #fff; padding: 20px 16px 0; }
+header { background: linear-gradient(135deg, var(--head1) 0%, var(--head2) 100%); color: #fff; padding-block: 20px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 header h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
-header p { font-size: 12px; color: #dbeafe; margin-top: 4px; }
+header p { font-size: 12px; color: var(--head-sub); margin-top: 4px; }
+.search { position: relative; margin-top: 12px; }
+.search input { width: 100%; border: 1.5px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.14); color: #fff; border-radius: 12px; padding: 11px 38px 11px 40px; font-size: 14px; outline: none; }
+.search input::placeholder { color: rgba(255,255,255,0.65); }
+.search input::-webkit-search-cancel-button, .search input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.search input:focus { background: rgba(255,255,255,0.22); border-color: #fff; }
+.search .ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #fff; pointer-events: none; }
+.search button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: rgba(255,255,255,0.25); color: #fff; width: 26px; height: 26px; border-radius: 50%; font-size: 13px; cursor: pointer; }
+#search-results { margin-bottom: 14px; }
+.sr-head { font-size: 12px; color: var(--text2); margin: 2px 0 8px; }
+.sr { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+.sr:hover, .sr:focus-visible { border-color: var(--accent); outline: none; }
+.sr .sr-t { font-size: 13px; font-weight: 700; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sr .sr-s { font-size: 12.5px; color: var(--text2); margin-top: 3px; }
+mark { background: var(--mark); color: var(--text); border-radius: 3px; padding: 0 2px; }
+.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+.basis-date { display: inline-block; font-size: 11px; color: var(--head-sub); border: 1px solid rgba(255,255,255,0.35); border-radius: 99px; padding: 1px 8px; margin-top: 6px; }
+.src { font-size: 11.5px; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.src a, .cases a, .law a { color: var(--accent2); text-decoration: none; border-bottom: 1px dotted var(--accent2); }
+.src a:focus-visible, .cases a:focus-visible, .law a:focus-visible, .sr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lawsync { border-radius: 12px; padding: 12px 14px; font-size: 12.5px; margin-bottom: 12px; border: 1px solid var(--border); background: var(--card); }
+.lawsync.warn { background: var(--yellow-bg); border-color: var(--yellow); }
+.lawsync.ok { background: var(--green-bg); border-color: var(--green-line); }
+.lawsync h3 { margin: 0 0 4px !important; }
+.lawsync details { margin-top: 8px; }
+.lawsync summary { cursor: pointer; font-weight: 700; color: var(--accent2); font-size: 12.5px; }
+.lawsync pre { white-space: pre-wrap; font-family: inherit; font-size: 12.5px; background: var(--bg2); border-radius: 8px; padding: 10px; margin-top: 6px; line-height: 1.6; }
+.outbanner { background: var(--yellow-bg); border: 1px solid var(--yellow); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; color: var(--text); margin-bottom: 12px; }
+textarea.copybox { width: 100%; min-height: 160px; margin-top: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-family: inherit; font-size: 12.5px; background: var(--surface); color: var(--text); }
 .tabs { display: flex; gap: 4px; margin-top: 14px; }
 .tab { flex: 1; background: rgba(255,255,255,0.15); color: #fff; border: none; padding: 10px 4px; font-size: 13px; font-weight: 700; border-radius: 10px 10px 0 0; cursor: pointer; }
 .tab.active { background: var(--bg2); color: var(--accent2); }
-main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
+main { max-width: 760px; margin: 0 auto; padding-block: 14px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .panel { display: none; } .panel.active { display: block; }
-.notice { background: var(--blue-bg); border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; font-size: 12px; color: #1e40af; margin-bottom: 14px; }
+.notice { background: var(--blue-bg); border: 1px solid var(--blue-line); border-radius: 12px; padding: 12px 14px; font-size: 12px; color: var(--notice-text); margin-bottom: 14px; }
 .notice b { display: block; margin-bottom: 3px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; margin-bottom: 12px; }
 .step-no { font-size: 11px; font-weight: 700; color: var(--accent2); letter-spacing: 0.5px; }
@@ -42,7 +99,7 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 .item-head .nm { flex: 1; font-size: 13.5px; font-weight: 700; }
 .item-head .nm small { display: block; font-weight: 500; color: var(--text2); font-size: 11px; }
 .tri { display: flex; gap: 4px; padding: 8px 12px; }
-.tri button { flex: 1; border: 1.5px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 2px; font-size: 12.5px; font-weight: 700; color: var(--text2); cursor: pointer; }
+.tri button { flex: 1; border: 1.5px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 2px; font-size: 12.5px; font-weight: 700; color: var(--text2); cursor: pointer; }
 .tri button.y.on { background: var(--red-bg); border-color: var(--red); color: var(--red); }
 .tri button.u.on { background: var(--yellow-bg); border-color: var(--yellow); color: var(--yellow); }
 .tri button.n.on { background: var(--green-bg); border-color: var(--green); color: var(--green); }
@@ -52,8 +109,8 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 .ox { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
 @media (max-width: 520px) { .ox { grid-template-columns: 1fr; } }
 .ox div { border-radius: 10px; padding: 10px; }
-.ox .o { background: var(--red-bg); border: 1px solid #fecaca; }
-.ox .x { background: var(--green-bg); border: 1px solid #bbf7d0; }
+.ox .o { background: var(--red-bg); border: 1px solid var(--red-line); }
+.ox .x { background: var(--green-bg); border: 1px solid var(--green-line); }
 .ox h4 { font-size: 12px; margin-bottom: 4px; }
 .ox .o h4 { color: var(--red); } .ox .x h4 { color: var(--green); }
 .ox ul, .detail ul, .result ul, .law ul { padding-left: 16px; }
@@ -62,7 +119,7 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 .cases h4 { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 .cases li { margin: 3px 0; }
 .btn { display: block; width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 800; cursor: pointer; margin: 6px 0 14px; }
-.btn.sec { background: #fff; color: var(--accent2); border: 1.5px solid var(--accent); font-size: 13px; padding: 11px; margin: 8px 0 0; }
+.btn.sec { background: var(--surface); color: var(--accent2); border: 1.5px solid var(--accent); font-size: 13px; padding: 11px; margin: 8px 0 0; }
 .result { border-radius: 14px; padding: 16px 14px; margin-bottom: 12px; border: 1.5px solid; }
 .result.red { background: var(--red-bg); border-color: var(--red); }
 .result.green { background: var(--green-bg); border-color: var(--green); }
@@ -72,15 +129,15 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 .result .basis { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .result h3 { font-size: 13px; margin: 12px 0 4px; color: var(--text2); }
 .result li { font-size: 13px; margin: 3px 0; }
-.result .explain { background: #fff; border-radius: 10px; padding: 12px; font-size: 13.5px; border: 1px solid var(--border); margin-top: 6px; }
+.result .explain { background: var(--surface); border-radius: 10px; padding: 12px; font-size: 13.5px; border: 1px solid var(--border); margin-top: 6px; }
 .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin: 2px 4px 2px 0; }
-.tag.r { background: #fee2e2; color: var(--red); } .tag.y { background: #fef3c7; color: var(--yellow); } .tag.g { background: #dcfce7; color: var(--green); } .tag.b { background: #dbeafe; color: var(--accent2); }
+.tag.r { background: var(--red-chip); color: var(--red); } .tag.y { background: var(--yellow-chip); color: var(--yellow); } .tag.g { background: var(--green-chip); color: var(--green); } .tag.b { background: var(--blue-chip); color: var(--accent2); }
 .law h3 { font-size: 14px; margin: 14px 0 6px; color: var(--accent2); }
 .law p, .law li { font-size: 13px; margin: 4px 0; }
 .law .art { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
 .disc { font-size: 11.5px; color: var(--text3); margin-top: 20px; line-height: 1.6; }
 .hidden { display: none !important; }
-.sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg2) 30%); padding: 16px 0 10px; }
+.sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg2) 30%); padding: 16px 0 calc(10px + env(safe-area-inset-bottom, 0px)); }
 .flow-hint { font-size: 12px; color: var(--text2); margin: -6px 0 10px; }
 </style>
 </head>
@@ -88,6 +145,12 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 <header>
   <h1>교통사고 공소권 판단 도구</h1>
   <p>교통사고처리특례법 제3조·제4조 기준 · 형사처벌 대상 여부 체크리스트</p>
+  <span class="basis-date" id="basis-date"></span>
+  <div class="search">
+    <span class="ico" aria-hidden="true">&#128269;</span>
+    <input id="q" type="search" placeholder="키워드 검색 (예: 황색신호, 자전거, 중상해, 면허정지)" autocomplete="off" aria-label="키워드 검색">
+    <button id="q-clear" hidden aria-label="검색어 지우기">&#10005;</button>
+  </div>
   <div class="tabs">
     <button class="tab active" data-p="check">판단 체크</button>
     <button class="tab" data-p="compare">경계 사례</button>
@@ -95,6 +158,8 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
   </div>
 </header>
 <main>
+<div id="search-results" hidden></div>
+<div id="outdated" class="outbanner" hidden></div>
 
 <!-- ───────── 판단 체크 ───────── -->
 <section id="check" class="panel active">
@@ -172,6 +237,7 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px 60px; }
 
 <!-- ───────── 법령 요지 ───────── -->
 <section id="law" class="panel law">
+  <div class="lawsync" id="lawsync"><h3>현행 법령 자동 확인</h3><p>확인 중…</p></div>
   <div class="art">
     <h3>판단 순서 한눈에 보기</h3>
     <ol style="padding-left:18px;font-size:13px">
@@ -307,6 +373,27 @@ const ITEMS = [
   cases:[], ev:['적재 상태·결속 장비 사진','낙하물과 사고 차량의 충돌 흔적','화물 고정 조치 여부 진술·영상'] }
 ];
 
+// ───────────────────────── 최신성 · 원문 링크 ─────────────────────────
+const CONTENT_DATE = '2026-10-17'; // 이 페이지의 법령·판례 요약을 작성한 기준일
+const LAW_URL = (law, art) => `https://www.law.go.kr/법령/${law}/${art}`;
+function linkify(t){
+  // 판례·결정 번호를 원문 검색 링크로 바꿈 (casenote.kr 사건번호 경로)
+  return t.replace(/(\d{2,4})(도|헌마|헌바|헌가|다|두|노|고단|고합)(\d+)/g, (m,y,k,n)=>{
+    const court = k.startsWith('헌')?'헌법재판소':'대법원';
+    return `<a href="https://casenote.kr/${court}/${m}" target="_blank" rel="noopener" title="원문 확인">${m}</a>`;
+  });
+}
+function firstArticle(lawStr){
+  const m = lawStr.match(/(도로교통법|건설기계관리법|교통사고처리특례법)\s*(제\d+조(?:의\d+)?)/);
+  return m ? {law:m[1], art:m[2]} : null;
+}
+function sourcesHtml(it){
+  const a = firstArticle(it.law);
+  const links = [`<a href="${LAW_URL('교통사고처리특례법','제3조')}" target="_blank" rel="noopener">교특법 제3조 원문</a>`];
+  if(a) links.push(`<a href="${LAW_URL(a.law,a.art)}" target="_blank" rel="noopener">${a.law} ${a.art} 원문</a>`);
+  return `<div class="src"><span style="color:var(--text3)">원문 확인:</span>${links.join('')}</div>`;
+}
+
 // ───────────────────────── UI 구성 ─────────────────────────
 const state = {};
 function $(s){ return document.querySelector(s); }
@@ -314,11 +401,12 @@ function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
 function oxHtml(it){
   return `<div class="ox">
-    <div class="o"><h4>해당 O (공소권 있음)</h4><ul>${it.o.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
-    <div class="x"><h4>해당 X (특례 판단으로)</h4><ul>${it.x.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+    <div class="o"><h4>해당 O (공소권 있음)</h4><ul>${it.o.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>
+    <div class="x"><h4>해당 X (특례 판단으로)</h4><ul>${it.x.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>
   </div>
-  ${it.cases.length?`<div class="cases"><h4>판단 기준·판례 취지</h4><ul>${it.cases.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
-  <div class="cases"><h4>확보할 자료</h4><ul>${it.ev.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;
+  ${it.cases.length?`<div class="cases"><h4>판단 기준·판례 취지</h4><ul>${it.cases.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>`:''}
+  <div class="cases"><h4>확보할 자료</h4><ul>${it.ev.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+  ${sourcesHtml(it)}`;
 }
 
 function renderItems(){
@@ -509,13 +597,90 @@ function render(){
   $('#out').innerHTML=html;
   const c=$('#copy'); if(c) c.addEventListener('click',()=>{
     const txt=['[교통사고 공소권 판단 요약]','결론: '+r.verdict,'근거: '+r.basis, ...(r.tags||[]).map(t=>'- '+t[1]), ...lines.map(l=>'- '+l), r.todo&&r.todo.length?'확보 자료:':'' , ...(r.todo||[]).map(l=>'  · '+l), '설명 문구: '+r.explain, '※ 참고용 자동 판단, 담당자 검토 필요'].filter(Boolean).join('\n');
-    navigator.clipboard.writeText(txt).then(()=>{c.textContent='복사됨 ✓'; setTimeout(()=>c.textContent='결과 요약 복사 (개인정보 없음)',1500);}).catch(()=>{ alert(txt); });
+    const done=()=>{c.textContent='복사됨 ✓'; setTimeout(()=>c.textContent='결과 요약 복사 (개인정보 없음)',1500);};
+    const fallback=()=>{ let ta=$('#copybox'); if(!ta){ ta=document.createElement('textarea'); ta.id='copybox'; ta.className='copybox'; ta.readOnly=true; c.insertAdjacentElement('afterend',ta);} ta.value=txt; ta.focus(); ta.select(); c.textContent='아래 내용을 길게 눌러 복사하세요'; };
+    try { navigator.clipboard.writeText(txt).then(done).catch(fallback); } catch(e){ fallback(); }
   });
   $('#out').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 renderItems(); renderCompare();
 $('#run').addEventListener('click',render);
+
+// ───────────────────────── 법령 요지 탭 판례 번호 링크 + 기준일 표시 ─────────────────────────
+document.querySelectorAll('#law .art p, #law .art li').forEach(el=>{ el.innerHTML = linkify(el.innerHTML); });
+$('#basis-date').textContent = '요약 작성 기준일 ' + CONTENT_DATE.replace(/-/g,'. ') + '.';
+
+// ───────────────────────── 키워드 검색 ─────────────────────────
+const INDEX = [];
+ITEMS.forEach(it=>{
+  const add=(label,text)=>INDEX.push({kind:'item', it, label, text});
+  add('요건', it.req); add('근거 법조', it.law);
+  it.o.forEach(t=>add('해당 O', t)); it.x.forEach(t=>add('해당 X', t));
+  it.cases.forEach(t=>add('판단 기준', t)); it.ev.forEach(t=>add('확보 자료', t));
+});
+document.querySelectorAll('#law .art').forEach(art=>{
+  const title = art.querySelector('h3')?.textContent || '법령 요지';
+  art.querySelectorAll('p, li').forEach(el=>INDEX.push({kind:'law', el:art, label:title, text:el.textContent}));
+});
+function hl(text, terms){
+  let h = esc(text);
+  terms.forEach(t=>{ const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); h=h.replace(re, m=>`<mark>${m}</mark>`); });
+  return h;
+}
+function doSearch(){
+  const q=$('#q').value.trim(); const box=$('#search-results');
+  $('#q-clear').hidden = !q;
+  if(!q){ box.hidden=true; box.innerHTML=''; document.querySelectorAll('.panel').forEach(p=>p.hidden=false); $('#outdated').hidden=!$('#outdated').innerHTML; return; }
+  const terms=q.split(/\s+/).filter(Boolean);
+  const hits=INDEX.filter(e=>terms.every(t=>e.text.toLowerCase().includes(t.toLowerCase()))).slice(0,40);
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=true); $('#outdated').hidden=true;
+  box.hidden=false;
+  if(!hits.length){ box.innerHTML=`<div class="sr-head">"${esc(q)}"에 해당하는 내용이 없습니다. 다른 표현으로 검색해 보세요 (예: 점멸, 끌고, 정지기간, 책임보험).</div>`; return; }
+  box.innerHTML=`<div class="sr-head">"${esc(q)}" 검색 결과 ${hits.length}건 · 항목을 누르면 해당 위치로 이동합니다</div>`+hits.map((e,i)=>{
+    const title = e.kind==='item' ? `<span class="tag b">제${e.it.no}호</span>${esc(e.it.name)} <span class="tag ${e.label==='해당 O'?'r':e.label==='해당 X'?'g':'y'}">${esc(e.label)}</span>` : `<span class="tag b">법령 요지</span>${esc(e.label)}`;
+    return `<div class="sr" tabindex="0" data-i="${i}"><div class="sr-t">${title}</div><div class="sr-s">${hl(e.text,terms)}</div></div>`;
+  }).join('');
+  box.querySelectorAll('.sr').forEach(el=>{
+    const go=()=>jumpTo(hits[+el.dataset.i]);
+    el.addEventListener('click',go); el.addEventListener('keydown',ev=>{ if(ev.key==='Enter') go(); });
+  });
+}
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.p===id));
+  document.querySelectorAll('.panel').forEach(p=>{ p.classList.toggle('active',p.id===id); p.hidden=false; });
+}
+function jumpTo(e){
+  $('#q').value=''; doSearch();
+  let target;
+  if(e.kind==='item'){ showTab('check'); target=$('#item-'+e.it.id); const d=$('#det-'+e.it.id); d.classList.add('open'); target.querySelector('.toggle').textContent='쟁점 닫기 ▴'; }
+  else { showTab('law'); target=e.el; }
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+  target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash');
+}
+$('#q').addEventListener('input',doSearch);
+$('#q-clear').addEventListener('click',()=>{ $('#q').value=''; doSearch(); $('#q').focus(); });
+
+// ───────────────────────── 현행 법령 자동 확인 (law-data.json) ─────────────────────────
+(async function lawSync(){
+  const box=$('#lawsync');
+  const links=`<p style="margin-top:6px">원문: <a href="${LAW_URL('교통사고처리특례법','제3조')}" target="_blank" rel="noopener">교특법 제3조</a> · <a href="${LAW_URL('교통사고처리특례법','제4조')}" target="_blank" rel="noopener">제4조</a> · <a href="https://www.law.go.kr/법령/특정범죄가중처벌등에관한법률" target="_blank" rel="noopener">특가법</a> · <a href="https://www.law.go.kr/법령/도로교통법" target="_blank" rel="noopener">도로교통법</a></p>`;
+  try{
+    const r=await fetch('law-data.json',{cache:'no-store'}); if(!r.ok) throw new Error(r.status);
+    const d=await r.json();
+    const fmt=s=>s&&s.length===8?`${s.slice(0,4)}. ${s.slice(4,6)}. ${s.slice(6)}.`:(s||'-');
+    const newer=(d.laws||[]).filter(l=>l.effective && l.effective.replace(/\./g,'') > CONTENT_DATE.replace(/-/g,''));
+    box.className='lawsync '+(newer.length?'warn':'ok');
+    box.innerHTML=`<h3>현행 법령 자동 확인</h3><p>국가법령정보센터 확인일 ${esc((d.fetchedAt||'').slice(0,10))} · 이 페이지 요약 기준일 ${CONTENT_DATE}</p>
+      <ul style="padding-left:16px;margin-top:4px">${(d.laws||[]).map(l=>`<li><b>${esc(l.name)}</b> 시행 ${esc(fmt(l.effective))} · 공포 ${esc(fmt(l.promulgated))} ${l.number?`(${esc(String(l.number))}호)`:''}</li>`).join('')}</ul>
+      ${newer.length?`<p style="margin-top:6px;font-weight:700">요약 기준일 이후 시행된 개정이 있습니다. 아래 조문 원문과 이 페이지의 요약이 다른지 확인하세요.</p>`:`<p style="margin-top:6px">요약 기준일 이후 시행된 개정은 확인되지 않았습니다.</p>`}
+      ${(d.laws||[]).map(l=>(l.articles||[]).map(a=>`<details><summary>${esc(l.name)} ${esc(a.no)} ${esc(a.title||'')} 현행 조문</summary><pre>${esc(a.text||'')}</pre></details>`).join('')).join('')}${links}`;
+    if(newer.length){ const ob=$('#outdated'); ob.hidden=false; ob.innerHTML=`요약 기준일(${CONTENT_DATE}) 이후 시행된 법령 개정이 확인되었습니다: ${newer.map(l=>esc(l.name)+' '+esc(fmt(l.effective))).join(', ')}. "법령 요지" 탭에서 현행 조문을 확인하세요.`; }
+  }catch(e){
+    box.className='lawsync';
+    box.innerHTML=`<h3>현행 법령 자동 확인</h3><p>자동 확인 데이터(law-data.json)가 없습니다. 이 페이지의 요약은 ${CONTENT_DATE} 기준이며, 아래 링크에서 현행 조문을 직접 확인할 수 있습니다. 저장소에 국가법령정보센터 API 키를 설정하면 매일 자동으로 갱신됩니다.</p>${links}`;
+  }
+})();
 </script>
 </body>
 </html>
