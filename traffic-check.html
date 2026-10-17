@@ -94,18 +94,21 @@ main { max-width: 760px; margin: 0 auto; padding-block: 14px 60px; padding-left:
 .opt.sel { border-color: var(--accent); background: var(--blue-bg); }
 .opt small { display: block; color: var(--text2); font-size: 11.5px; margin-top: 2px; }
 .item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
-.item-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card2); }
-.item-head .no { width: 22px; height: 22px; border-radius: 50%; background: var(--accent2); color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.item-head .nm { flex: 1; font-size: 13.5px; font-weight: 700; }
-.item-head .nm small { display: block; font-weight: 500; color: var(--text2); font-size: 11px; }
-.tri { display: flex; gap: 4px; padding: 8px 12px; }
-.tri button { flex: 1; border: 1.5px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 2px; font-size: 12.5px; font-weight: 700; color: var(--text2); cursor: pointer; }
+.item-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--card2); }
+.item-head .no { width: 20px; height: 20px; border-radius: 50%; background: var(--accent2); color: #fff; font-size: 10.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.item-head .nm { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; line-height: 1.3; }
+.item-head .nm small { display: block; font-weight: 500; color: var(--text2); font-size: 10.5px; }
+.tri { display: flex; gap: 4px; padding: 6px 10px 8px; }
+.tri button { flex: 1; border: 1.5px solid var(--border); background: var(--surface); border-radius: 8px; padding: 6px 2px; font-size: 12px; font-weight: 700; color: var(--text2); cursor: pointer; }
 .tri button.y.on { background: var(--red-bg); border-color: var(--red); color: var(--red); }
 .tri button.u.on { background: var(--yellow-bg); border-color: var(--yellow); color: var(--yellow); }
 .tri button.n.on { background: var(--green-bg); border-color: var(--green); color: var(--green); }
-.detail { display: none; padding: 0 12px 12px; font-size: 12.5px; }
+.detail { display: none; padding: 2px 10px 12px; font-size: 12.5px; border-top: 1px dashed var(--border); margin-top: 2px; }
+.detail > p:first-child { padding-top: 8px; }
 .detail.open { display: block; }
-.toggle { background: none; border: none; color: var(--accent2); font-size: 12px; font-weight: 700; cursor: pointer; padding: 4px 12px 10px; }
+.toggle { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 99px; color: var(--accent2); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 4px 9px; }
+.toggle[aria-expanded="true"] { background: var(--blue-bg); border-color: var(--accent); }
+.item { margin-bottom: 6px; }
 .ox { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
 @media (max-width: 520px) { .ox { grid-template-columns: 1fr; } }
 .ox div { border-radius: 10px; padding: 10px; }
@@ -114,7 +117,10 @@ main { max-width: 760px; margin: 0 auto; padding-block: 14px 60px; padding-left:
 .ox h4 { font-size: 12px; margin-bottom: 4px; }
 .ox .o h4 { color: var(--red); } .ox .x h4 { color: var(--green); }
 .ox ul, .detail ul, .result ul, .law ul { padding-left: 16px; }
-.ox li, .detail li { margin: 2px 0; }
+.ox li, .detail li { margin: 3px 0; }
+.ox li b { color: var(--text); }
+.cite { display: inline-block; font-size: 11px; color: var(--text3); margin-left: 4px; }
+.cite a { color: var(--accent2); }
 .cases { background: var(--bg2); border-radius: 10px; padding: 10px; margin-top: 6px; }
 .cases h4 { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 .cases li { margin: 3px 0; }
@@ -192,7 +198,7 @@ main { max-width: 760px; margin: 0 auto; padding-block: 14px 60px; padding-left:
   <div class="card" id="card-12">
     <div class="step-no">STEP 3</div>
     <h2>12대 중과실 해당 여부</h2>
-    <div class="hint">각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. "쟁점 보기"에서 경계 사례와 판례를 확인할 수 있습니다.</div>
+    <div class="hint">각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. 오른쪽 "쟁점" 버튼을 누르면 경계 사례와 판례가 펼쳐집니다.</div>
     <div id="items"></div>
   </div>
 
@@ -403,37 +409,55 @@ const state = {};
 function $(s){ return document.querySelector(s); }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
+// 사례 문장: 앞머리(첫 구절)를 굵게, 괄호 속 판례 인용은 줄 끝의 작은 글씨로
+function caseHtml(raw){
+  let text = raw, cite = '';
+  const m = text.match(/\(([^()]*?)((?:대법원|헌재|헌법재판소)[^()]*)\)/);
+  if(m){ cite = m[2].trim(); const rest = m[1].replace(/[,\s]+$/,'').trim(); text = text.replace(m[0], rest ? `(${rest})` : '').replace(/\s{2,}/g,' ').trim(); }
+  let lead = '';
+  const lm = text.match(/^(.{6,30}?)(?=\(|\s*→|,\s|$)/);
+  if(lm) lead = lm[1]; else { const sp = text.indexOf(' ', 12); if(sp>0 && sp<26) lead = text.slice(0, sp); }
+  // 글자 수 제한에 걸려 어절 중간에서 끊겼으면 마지막 띄어쓰기까지로 물림
+  if(lead && lead.length>=28 && !/^[(→,]/.test(text.slice(lead.length).trim())){ const ls = lead.lastIndexOf(' '); if(ls>8) lead = lead.slice(0, ls); }
+  let html = lead ? `<b>${esc(lead)}</b>${esc(text.slice(lead.length))}` : esc(text);
+  html = linkify(html);
+  if(cite) html += `<span class="cite">${linkify(esc(cite))}</span>`;
+  return html;
+}
 function oxHtml(it){
   return `<div class="ox">
-    <div class="o"><h4>해당 O (공소권 있음)</h4><ul>${it.o.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>
-    <div class="x"><h4>해당 X (특례 판단으로)</h4><ul>${it.x.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>
+    <div class="o"><h4>해당 O (공소권 있음)</h4><ul>${it.o.map(t=>`<li>${caseHtml(t)}</li>`).join('')}</ul></div>
+    <div class="x"><h4>해당 X (특례 판단으로)</h4><ul>${it.x.map(t=>`<li>${caseHtml(t)}</li>`).join('')}</ul></div>
   </div>
   ${it.cases.length?`<div class="cases"><h4>판단 기준·판례 취지</h4><ul>${it.cases.map(t=>`<li>${linkify(esc(t))}</li>`).join('')}</ul></div>`:''}
   <div class="cases"><h4>확보할 자료</h4><ul>${it.ev.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
   ${sourcesHtml(it)}`;
 }
 
+function setOpen(id, open){
+  const d=$('#det-'+id), t=document.querySelector(`.toggle[data-t="${id}"]`);
+  d.classList.toggle('open', open);
+  if(t){ t.textContent = open?'쟁점 ▴':'쟁점 ▾'; t.setAttribute('aria-expanded', open?'true':'false'); }
+}
 function renderItems(){
   $('#items').innerHTML = ITEMS.map(it=>`
   <div class="item" id="item-${it.id}">
-    <div class="item-head"><div class="no">${it.no}</div><div class="nm">${esc(it.name)}<small>${esc(it.law)}</small></div></div>
+    <div class="item-head"><div class="no">${it.no}</div><div class="nm">${esc(it.name)}<small>${esc(it.law)}</small></div><button class="toggle" data-t="${it.id}" aria-expanded="false">쟁점 ▾</button></div>
     <div class="tri">
       <button class="y" data-id="${it.id}" data-v="y">해당</button>
       <button class="u" data-id="${it.id}" data-v="u">쟁점</button>
       <button class="n on" data-id="${it.id}" data-v="n">비해당</button>
     </div>
-    <button class="toggle" data-t="${it.id}">쟁점 보기 ▾</button>
     <div class="detail" id="det-${it.id}"><p style="margin-bottom:6px"><b>요건</b> ${esc(it.req)}</p>${oxHtml(it)}</div>
   </div>`).join('');
   ITEMS.forEach(it=>state[it.id]='n');
   document.querySelectorAll('.tri button').forEach(b=>b.addEventListener('click',()=>{
     const id=b.dataset.id; state[id]=b.dataset.v;
     b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-    if(b.dataset.v!=='n') $('#det-'+id).classList.add('open');
+    if(b.dataset.v!=='n') setOpen(id, true);
   }));
   document.querySelectorAll('.toggle').forEach(b=>b.addEventListener('click',()=>{
-    const d=$('#det-'+b.dataset.t); d.classList.toggle('open');
-    b.textContent = d.classList.contains('open')?'쟁점 닫기 ▴':'쟁점 보기 ▾';
+    setOpen(b.dataset.t, !$('#det-'+b.dataset.t).classList.contains('open'));
   }));
 }
 
@@ -463,7 +487,7 @@ function applyResultMode(){
   $('#card-12').classList.toggle('hidden', r==='property');
   $('#card-victim').classList.toggle('hidden', hide);
   if(r==='death') $('#card-12 .hint').innerHTML='사망사고는 12대 중과실 여부와 무관하게 공소권이 있습니다. 다만 과실 입증과 양형, 특가법 적용 판단을 위해 해당 여부를 표시해 두면 결과에 반영됩니다.';
-  else $('#card-12 .hint').innerHTML='각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. "쟁점 보기"에서 경계 사례와 판례를 확인할 수 있습니다.';
+  else $('#card-12 .hint').innerHTML='각 항목을 <b>해당 / 쟁점 / 비해당</b>으로 표시합니다. 위반 행위가 사고의 <b>직접 원인</b>인 경우에만 해당으로 봅니다. 오른쪽 "쟁점" 버튼을 누르면 경계 사례와 판례가 펼쳐집니다.';
 }
 function val(n){ const r=document.querySelector(`input[name=${n}]:checked`); return r?r.value:null; }
 
@@ -659,7 +683,7 @@ function showTab(id){
 function jumpTo(e){
   $('#q').value=''; doSearch();
   let target;
-  if(e.kind==='item'){ showTab('check'); target=$('#item-'+e.it.id); const d=$('#det-'+e.it.id); d.classList.add('open'); target.querySelector('.toggle').textContent='쟁점 닫기 ▴'; }
+  if(e.kind==='item'){ showTab('check'); target=$('#item-'+e.it.id); setOpen(e.it.id, true); }
   else { showTab('law'); target=e.el; }
   target.scrollIntoView({behavior:'smooth',block:'start'});
   target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash');
